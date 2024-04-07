@@ -1,0 +1,28 @@
+{
+    // Use o IntelliSense para saber mais sobre os atributos possíveis.
+    // Focalizar para exibir as descrições dos atributos existentes.
+    // Para obter mais informações, acesse: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "conta_organiza",
+            "cwd": "conta_organiza",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "conta_organiza (profile mode)",
+            "cwd": "conta_organiza",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "conta_organiza (release mode)",
+            "cwd": "conta_organiza",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
