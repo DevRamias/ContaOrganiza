@@ -1,11 +1,34 @@
+import 'package:conta_organiza/Telas/Inicio.dart';
 import 'package:flutter/material.dart';
-import 'package:conta_organiza/Tela_inicial.dart'; // Importe o arquivo da Tela Inicial
+//import 'package:conta_organiza/Tela_inicial.dart'; // Importe o arquivo da Tela Inicial
 
 void main() {
   runApp(MyApp());
 }
 
+/*
+class FigmaToCodeApp extends StatelessWidget {
+  const FigmaToCodeApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      ),
+      home: Scaffold(
+        body: ListView(children: [
+          TelaInicial(),
+        ]),
+      ),
+    );
+  }
+}
+*/
+
+// ignore: use_key_in_widget_constructors
 class MyApp extends StatelessWidget {
+  //Stateful pra mudar se caso der erro
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,7 +40,7 @@ class MyApp extends StatelessWidget {
         canvasColor: const Color(0xFFfafafa),
       ),
       home:
-          Tela_inicial(), // Aqui você usa a Tela_inicial como a tela inicial do app
+          TelaInicial(), // Aqui você usa a Tela_inicial como a tela inicial do app
     );
   }
 }
