@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class TelaInicial extends StatelessWidget {
@@ -8,7 +7,7 @@ class TelaInicial extends StatelessWidget {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double imageHeight =
-        screenHeight * 0.2; // Ajuste esta porcentagem conforme necessário
+        screenHeight * 0.15; // Ajuste esta porcentagem conforme necessário
 
     return MaterialApp(
       title: 'Imagem na Build',
@@ -30,12 +29,11 @@ class TelaInicial extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: "inter",
-                        fontSize: 26,
+                        fontSize: 20,
                         color: Color(0xff838DFF),
                       ),
                     ),
-                    const SizedBox(height: 48),
-
+                    const SizedBox(height: 52),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         side: const BorderSide(
@@ -47,7 +45,7 @@ class TelaInicial extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20), // Ajusta o padding horizontal
                         minimumSize:
-                            const Size(300, 75), // Largura e altura mínimas
+                            const Size(280, 75), // Largura e altura mínimas
                       ),
                       onPressed: () {
                         // Função a ser executada quando o botão for pressionado
@@ -60,9 +58,7 @@ class TelaInicial extends StatelessWidget {
                             fontFamily: 'Inter'),
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         side: const BorderSide(
@@ -74,7 +70,7 @@ class TelaInicial extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20), // Ajusta o padding horizontal
                         minimumSize:
-                            const Size(300, 75), // Largura e altura mínimas
+                            const Size(280, 75), // Largura e altura mínimas
                       ),
                       onPressed: () {
                         // Função a ser executada quando o botão for pressionado
@@ -87,38 +83,31 @@ class TelaInicial extends StatelessWidget {
                             fontFamily: 'Inter'),
                       ),
                     ),
-                    // ElevatedButton(
-                    //   style: OutlinedButton.styleFrom(
-                    //     side: const BorderSide(color: Colors.green),
-                    //     shape: const RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.all(Radius.circular(10)),
-                    //     ),
-                    //   ),
-                    //   onPressed: () {},
-
-                    //   // style: TextButton.styleFrom(
-                    //   //   foregroundColor: Colors.black,
-                    //   //   shape: const OvalBorder(),
-                    //   //   padding: const EdgeInsets.all(20),
-                    //   //   fixedSize: const Size(2, 80),
-                    //   // ),
-                    //   child: const Padding(
-                    //     padding: EdgeInsets.all(0),
-                    //     child: Text("Cadastre-se"),
-                    //     //style: TextStyle(color: Colors.white, fontSize: 30),
-                    //   ),
-                    // ),
-
-                    // const ElevatedButton(
-                    //     // style: ,
-                    //     onPressed: () {},
-                    //     child: Padding(
-                    //       padding: EdgeInsets.all(16.0),
-                    //       child: Text("Cadastre-se"),
-                    //     ),
-                    //   ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () {
+                        // Função a ser executada quando o texto for clicado
+                      },
+                      child: const Text(
+                        "Política de privacidade",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.red,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                height: 100, // Altura do rodapé
+                color: const Color(0xff838DFF), // Cor do rodapé
               ),
             ),
           ],
