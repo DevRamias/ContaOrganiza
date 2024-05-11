@@ -32,11 +32,11 @@ class ConfirmarEmail extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 50),
+            const SizedBox(height: 40),
             const Text(
               'Confirmar E-mail',
               style: TextStyle(
