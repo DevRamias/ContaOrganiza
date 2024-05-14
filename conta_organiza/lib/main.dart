@@ -1,5 +1,6 @@
 // import 'package:conta_organiza/Telas/Botao.dart';
-import 'package:conta_organiza/Telas/CadastrarUsuario.dart';
+//import 'package:conta_organiza/Telas/CadastrarUsuario.dart';
+import 'package:conta_organiza/Telas/ConfirmarEmail.dart';
 //import 'package:conta_organiza/Telas/Inicio.dart';
 import 'package:flutter/material.dart';
 //import 'package:conta_organiza/Tela_inicial.dart'; // Importe o arquivo da Tela Inicial
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
         canvasColor: const Color(0xFFfafafa),
       ),
       home:
-          CadastrarUsuario(), // Aqui você usa a Tela_inicial como a tela inicial do app
+          ConfirmarEmail(), // Aqui você usa a Tela_inicial como a tela inicial do app
     );
   }
 }
