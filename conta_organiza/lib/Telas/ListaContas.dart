@@ -1,38 +1,48 @@
 import 'package:flutter/material.dart';
 
-class ListaContas extends StatefulWidget {
-  @override
-  _ListaContasState createState() => _ListaContasState();
-}
-
-class _ListaContasState extends State<ListaContas> {
-  int _currentIndex = 0;
-
-  final List<Widget> _pages = [
-    // Aqui você adiciona os widgets das outras páginas
-    Text('Home Page'), // Substitua pelo widget da página Home
-    Text('Contas Page'), // Substitua pelo widget da página Contas
-    Text(
-        'Transferências Page'), // Substitua pelo widget da página Transferências
-    Text('Configurações Page'), // Substitua pelo widget da página Configurações
-  ];
-
+class ListaContas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff838DFF),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundImage: AssetImage(
+                      'assets/images/Foto do perfil.png'), // Imagem de perfil padrão
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Nome do Usuário',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+            Image.asset(
+              'assets/images/Vector.png', // Substitua pelo caminho da sua imagem
+              height: 30, // Diminuir o tamanho do logo
+            ),
+          ],
+        ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(15),
+          preferredSize: const Size.fromHeight(45),
           child: Column(
             children: [
               Container(
-                alignment: Alignment.bottomCenter,
                 padding: const EdgeInsets.only(bottom: 8),
                 child: const Text(
-                  'Lista de Contas',
+                  'Tela Inicial',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 26,
                     color: Colors.white,
                     fontFamily: 'Inter',
                   ),
@@ -47,16 +57,56 @@ class _ListaContasState extends State<ListaContas> {
           ),
         ),
       ),
-      body: _pages[
-          _currentIndex], // Muda o conteúdo da tela conforme o índice selecionado
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListView.builder(
+              padding: const EdgeInsets.all(20),
+              shrinkWrap: true, // Add this to constrain the ListView
+              physics:
+                  NeverScrollableScrollPhysics(), // Disable the ListView scrolling
+              itemCount: 10, // Número de contas na lista
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    border:
+                        Border.all(color: const Color(0xff838DFF), width: 2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Conta ${index + 1}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Detalhes da conta ${index + 1}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
@@ -66,16 +116,18 @@ class _ListaContasState extends State<ListaContas> {
             label: 'Contas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.compare_arrows),
-            label: 'Transferências',
+            icon: Icon(Icons.add),
+            label: 'Adicionar',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Configurações',
           ),
         ],
-        selectedItemColor: const Color(0xff5E6DDB),
+        selectedItemColor: const Color(0xff838DFF),
         unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
