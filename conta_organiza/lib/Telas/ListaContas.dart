@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 
-class ListaContas extends StatelessWidget {
+class ListaContas extends StatefulWidget {
+  @override
+  _ListaContasState createState() => _ListaContasState();
+}
+
+class _ListaContasState extends State<ListaContas> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    HomeScreen(),
+    ContasScreen(),
+    AdicionarScreen(),
+    ConfiguracoesScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,14 +33,14 @@ class ListaContas extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundImage: AssetImage(
-                      'assets/images/Foto do perfil.png'), // Imagem de perfil padrão
+                  backgroundImage:
+                      AssetImage('assets/images/Foto do perfil.png'),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Nome do Usuário',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 20,
                     color: Colors.white,
                     fontFamily: 'Inter',
                   ),
@@ -28,13 +48,13 @@ class ListaContas extends StatelessWidget {
               ],
             ),
             Image.asset(
-              'assets/images/Vector.png', // Substitua pelo caminho da sua imagem
-              height: 30, // Diminuir o tamanho do logo
+              'assets/images/Vector.png',
+              height: 30,
             ),
           ],
         ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(45),
+          preferredSize: const Size.fromHeight(55),
           child: Column(
             children: [
               Container(
@@ -42,7 +62,7 @@ class ListaContas extends StatelessWidget {
                 child: const Text(
                   'Tela Inicial',
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 30,
                     color: Colors.white,
                     fontFamily: 'Inter',
                   ),
@@ -57,78 +77,71 @@ class ListaContas extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListView.builder(
-              padding: const EdgeInsets.all(20),
-              shrinkWrap: true, // Add this to constrain the ListView
-              physics:
-                  NeverScrollableScrollPhysics(), // Disable the ListView scrolling
-              itemCount: 10, // Número de contas na lista
-              itemBuilder: (context, index) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    border:
-                        Border.all(color: const Color(0xff838DFF), width: 2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Conta ${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.black,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Detalhes da conta ${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
+        backgroundColor: const Color(0xff838DFF),
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: ImageIcon(AssetImage('assets/images/icon1.jpg')),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance),
+            icon: ImageIcon(AssetImage('assets/images/icon2.jpg')),
             label: 'Contas',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add),
+            icon: ImageIcon(AssetImage('assets/images/icon3.png')),
             label: 'Adicionar',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: ImageIcon(AssetImage('assets/images/icon4.jpg')),
             label: 'Configurações',
           ),
         ],
-        selectedItemColor: const Color(0xff838DFF),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
+        currentIndex: _selectedIndex,
+        selectedItemColor: Color(0xFFFFFFFF),
+        unselectedItemColor: Color.fromARGB(255, 0, 0, 0),
+        onTap: _onItemTapped,
+        showSelectedLabels: false, // Esconde labels selecionadas
+        showUnselectedLabels: false, // Esconde labels não selecionadas
         type: BottomNavigationBarType.fixed,
       ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('Home Screen'),
+    );
+  }
+}
+
+class ContasScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('Contas Screen'),
+    );
+  }
+}
+
+class AdicionarScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('Adicionar Screen'),
+    );
+  }
+}
+
+class ConfiguracoesScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text('Configurações Screen'),
     );
   }
 }
