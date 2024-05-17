@@ -5,7 +5,6 @@ class CadastrarUsuario extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff838DFF),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(15),
@@ -41,8 +40,8 @@ class CadastrarUsuario extends StatelessWidget {
               'Nome completo',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.black, // Mudança de cor
-                fontFamily: 'Inter', // Mudança de fonte
+                color: Colors.black,
+                fontFamily: 'Inter',
               ),
             ),
             const SizedBox(height: 8),
@@ -63,8 +62,8 @@ class CadastrarUsuario extends StatelessWidget {
               'E-mail',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.black, // Mudança de cor
-                fontFamily: 'Inter', // Mudança de fonte
+                color: Colors.black,
+                fontFamily: 'Inter',
               ),
             ),
             const SizedBox(height: 8),
@@ -141,7 +140,7 @@ class CadastrarUsuario extends StatelessWidget {
                   minimumSize: const Size(240, 55), // Largura e altura mínimas
                 ),
                 onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
+                  Navigator.pushNamed(context, '/confirmar-email');
                 },
                 child: const Text(
                   "Cadastrar",
@@ -171,7 +170,7 @@ class CadastrarUsuario extends StatelessWidget {
                   minimumSize: const Size(140, 40), // Largura e altura mínimas
                 ),
                 onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
+                  Navigator.pop(context);
                 },
                 child: const Text(
                   "Cancelar",

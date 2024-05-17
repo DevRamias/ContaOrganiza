@@ -5,7 +5,7 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: false, // Remove a seta de voltar
         backgroundColor: const Color(0xff838DFF),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(15),
@@ -42,8 +42,8 @@ class Login extends StatelessWidget {
               'E-mail ou usuário',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.black, // Mudança de cor
-                fontFamily: 'Inter', // Mudança de fonte
+                color: Colors.black,
+                fontFamily: 'Inter',
               ),
             ),
             const SizedBox(height: 8),
@@ -64,8 +64,8 @@ class Login extends StatelessWidget {
               'Senha',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.black, // Mudança de cor
-                fontFamily: 'Inter', // Mudança de fonte
+                color: Colors.black,
+                fontFamily: 'Inter',
               ),
             ),
             const SizedBox(height: 8),
@@ -76,6 +76,7 @@ class Login extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                obscureText: true,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -93,12 +94,11 @@ class Login extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(260, 70), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(260, 70),
                 ),
                 onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
+                  Navigator.pushNamed(context, '/lista-contas');
                 },
                 child: const Text(
                   "Entrar",
@@ -122,13 +122,12 @@ class Login extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8), // Ajuste o padding horizontal e vertical
-                  minimumSize: const Size(140, 40), // Largura e altura mínimas
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(140, 40),
                 ),
                 onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
+                  Navigator.pop(context);
                 },
                 child: const Text(
                   "Cancelar",
@@ -140,7 +139,7 @@ class Login extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Center(
               child: GestureDetector(
                 onTap: () {

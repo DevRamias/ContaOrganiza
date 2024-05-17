@@ -71,9 +71,8 @@ class ConfirmarEmail extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 75), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(240, 75),
                 ),
                 onPressed: () {
                   // Função a ser executada quando o botão for pressionado
@@ -100,13 +99,12 @@ class ConfirmarEmail extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8), // Ajuste o padding horizontal e vertical
-                  minimumSize: const Size(160, 45), // Largura e altura mínimas
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(160, 45),
                 ),
                 onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
+                  Navigator.pop(context);
                 },
                 child: const Text(
                   "Cancelar",
