@@ -5,6 +5,7 @@ class Login extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff838DFF),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(15),
