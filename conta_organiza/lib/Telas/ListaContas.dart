@@ -1,3 +1,7 @@
+import 'package:conta_organiza/Telas/Configuracoes.dart';
+import 'package:conta_organiza/Telas/Diretorios.dart';
+import 'package:conta_organiza/Telas/TelaInicialPage.dart';
+import 'package:conta_organiza/Telas/Pesquisar.dart';
 import 'package:flutter/material.dart';
 
 class ListaContas extends StatefulWidget {
@@ -9,10 +13,17 @@ class _ListaContasState extends State<ListaContas> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    HomeScreen(),
-    ContasScreen(),
-    AdicionarScreen(),
-    ConfiguracoesScreen(),
+    TelaInicialPage(),
+    Diretorios(),
+    Pesquisar(),
+    Configuracoes(),
+  ];
+
+  final List<String> _titles = [
+    'Tela Inicial',
+    'Diretórios',
+    'Pesquisar',
+    'Configurações',
   ];
 
   void _onItemTapped(int index) {
@@ -60,9 +71,9 @@ class _ListaContasState extends State<ListaContas> {
             children: [
               Container(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: const Text(
-                  'Tela Inicial',
-                  style: TextStyle(
+                child: Text(
+                  _titles[_selectedIndex],
+                  style: const TextStyle(
                     fontSize: 30,
                     color: Colors.white,
                     fontFamily: 'Inter',
@@ -81,18 +92,18 @@ class _ListaContasState extends State<ListaContas> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xff838DFF),
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/images/icon1.jpg')),
-            label: 'Home',
+            label: 'TelaInicial',
           ),
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/images/icon2.jpg')),
-            label: 'Contas',
+            label: 'Diretórios',
           ),
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/images/icon3.png')),
-            label: 'Adicionar',
+            label: 'Pesquisar',
           ),
           BottomNavigationBarItem(
             icon: ImageIcon(AssetImage('assets/images/icon4.jpg')),
@@ -100,49 +111,13 @@ class _ListaContasState extends State<ListaContas> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFFFFFFFF),
-        unselectedItemColor: Color.fromARGB(255, 0, 0, 0),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.black,
         onTap: _onItemTapped,
-        showSelectedLabels: false, // Esconde labels selecionadas
-        showUnselectedLabels: false, // Esconde labels não selecionadas
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         type: BottomNavigationBarType.fixed,
       ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Home Screen'),
-    );
-  }
-}
-
-class ContasScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Contas Screen'),
-    );
-  }
-}
-
-class AdicionarScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Adicionar Screen'),
-    );
-  }
-}
-
-class ConfiguracoesScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Configurações Screen'),
     );
   }
 }
