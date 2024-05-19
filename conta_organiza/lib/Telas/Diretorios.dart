@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'dart:io';
 
 class Diretorios extends StatefulWidget {
@@ -21,6 +22,15 @@ class _DiretoriosState extends State<Diretorios> {
     final newDirectory = Directory('${directory.path}/$name');
     if (!(await newDirectory.exists())) {
       await newDirectory.create(recursive: true);
+      await _loadDirectories();
+    }
+  }
+
+  Future<void> _renameDirectory(Directory dir, String newName) async {
+    final newPath = '${dir.parent.path}/$newName';
+    final newDirectory = Directory(newPath);
+    if (!(await newDirectory.exists())) {
+      await dir.rename(newPath);
       await _loadDirectories();
     }
   }
@@ -81,6 +91,39 @@ class _DiretoriosState extends State<Diretorios> {
     );
   }
 
+  Future<void> _showRenameDirectoryDialog(Directory dir) async {
+    String newName = '';
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Renomear diretório'),
+        content: TextField(
+          onChanged: (value) {
+            newName = value;
+          },
+          decoration: InputDecoration(hintText: "Novo nome do diretório"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (newName.isNotEmpty) {
+                await _renameDirectory(dir, newName);
+              }
+              Navigator.of(context).pop();
+            },
+            child: Text('Renomear'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showDeleteDirectoryDialog(Directory dir) async {
     await showDialog(
       context: context,
@@ -107,10 +150,20 @@ class _DiretoriosState extends State<Diretorios> {
     );
   }
 
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final Directory item = _directories.removeAt(oldIndex);
+      _directories.insert(newIndex, item);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GridView.builder(
+      body: ReorderableGridView.builder(
         padding: EdgeInsets.all(20),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -120,14 +173,14 @@ class _DiretoriosState extends State<Diretorios> {
         ),
         itemCount: _directories.length,
         itemBuilder: (context, index) {
+          Directory dir = _directories[index];
           return GestureDetector(
-            onLongPress: () => _showDeleteDirectoryDialog(_directories[index]),
+            key: ValueKey(dir.path),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      ArquivosPage(diretorio: _directories[index]),
+                  builder: (context) => ArquivosPage(diretorio: dir),
                 ),
               );
             },
@@ -135,30 +188,51 @@ class _DiretoriosState extends State<Diretorios> {
               // decoration: BoxDecoration(
               //   borderRadius: BorderRadius.circular(10),
               //   color: Colors.blue.shade100,
-              //   boxShadow: [
-              //     BoxShadow(
-              //       color: Colors.grey.withOpacity(0.5),
-              //       spreadRadius: 2,
-              //       blurRadius: 5,
-              //       offset: Offset(0, 3),
-              //     ),
-              //   ],
               // ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack(
                 children: [
-                  ImageIcon(
-                    AssetImage('assets/images/diretorio.png'),
-                    size: 60,
-                    color: Color(0xff5E6DDB),
+                  Positioned(
+                    right: 5,
+                    top: 5,
+                    child: PopupMenuButton<String>(
+                      onSelected: (String result) async {
+                        if (result == 'renomear') {
+                          await _showRenameDirectoryDialog(dir);
+                        } else if (result == 'excluir') {
+                          await _showDeleteDirectoryDialog(dir);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'renomear',
+                          child: Text('Renomear'),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'excluir',
+                          child: Text('Excluir'),
+                        ),
+                      ],
+                    ),
                   ),
-                  SizedBox(height: 2),
-                  Text(
-                    _directories[index].path.split('/').last,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                      fontFamily: 'Inter',
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ImageIcon(
+                          AssetImage('assets/images/diretorio.png'),
+                          size: 60,
+                          color: Color(0xff5E6DDB),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          dir.path.split('/').last,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -166,6 +240,7 @@ class _DiretoriosState extends State<Diretorios> {
             ),
           );
         },
+        onReorder: _onReorder,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDirectoryDialog,
