@@ -13,13 +13,7 @@ class _DiretoriosState extends State<Diretorios> {
   @override
   void initState() {
     super.initState();
-    _createAndLoadDirectories();
-  }
-
-  Future<void> _createAndLoadDirectories() async {
-    await _createDirectory("Luz");
-    await _createDirectory("Agua");
-    await _loadDirectories();
+    _loadDirectories();
   }
 
   Future<void> _createDirectory(String name) async {
@@ -27,6 +21,14 @@ class _DiretoriosState extends State<Diretorios> {
     final newDirectory = Directory('${directory.path}/$name');
     if (!(await newDirectory.exists())) {
       await newDirectory.create(recursive: true);
+      await _loadDirectories();
+    }
+  }
+
+  Future<void> _deleteDirectory(Directory dir) async {
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+      await _loadDirectories();
     }
   }
 
@@ -69,7 +71,6 @@ class _DiretoriosState extends State<Diretorios> {
             onPressed: () async {
               if (dirName.isNotEmpty) {
                 await _createDirectory(dirName);
-                await _loadDirectories();
               }
               Navigator.of(context).pop();
             },
@@ -80,19 +81,47 @@ class _DiretoriosState extends State<Diretorios> {
     );
   }
 
+  Future<void> _showDeleteDirectoryDialog(Directory dir) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Excluir diretório'),
+        content: Text(
+            'Você tem certeza que deseja excluir o diretório ${dir.path.split('/').last}?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _deleteDirectory(dir);
+              Navigator.of(context).pop();
+            },
+            child: Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GridView.builder(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(20),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 5,
-          mainAxisSpacing: 5,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 3.5 / 2,
         ),
         itemCount: _directories.length,
         itemBuilder: (context, index) {
           return GestureDetector(
+            onLongPress: () => _showDeleteDirectoryDialog(_directories[index]),
             onTap: () {
               Navigator.push(
                 context,
@@ -102,31 +131,37 @@ class _DiretoriosState extends State<Diretorios> {
                 ),
               );
             },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.blue.shade100,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ImageIcon(AssetImage('assets/images/diretorio.png'),
-                        size: 50,
-                        color: Color(0xff5E6DDB)), // Reduza o tamanho do ícone
-                    SizedBox(
-                        height:
-                            5), // Reduza o espaçamento entre o ícone e o texto
-                    Text(
-                      _directories[index].path.split('/').last,
-                      style: TextStyle(
-                        fontSize: 14, // Reduza o tamanho do texto
-                        fontWeight: FontWeight.bold,
-                      ),
+            child: Container(
+              // decoration: BoxDecoration(
+              //   borderRadius: BorderRadius.circular(10),
+              //   color: Colors.blue.shade100,
+              //   boxShadow: [
+              //     BoxShadow(
+              //       color: Colors.grey.withOpacity(0.5),
+              //       spreadRadius: 2,
+              //       blurRadius: 5,
+              //       offset: Offset(0, 3),
+              //     ),
+              //   ],
+              // ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ImageIcon(
+                    AssetImage('assets/images/diretorio.png'),
+                    size: 60,
+                    color: Color(0xff5E6DDB),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    _directories[index].path.split('/').last,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      fontFamily: 'Inter',
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
