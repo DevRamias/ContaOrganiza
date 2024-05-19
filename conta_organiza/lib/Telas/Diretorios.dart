@@ -244,7 +244,11 @@ class _DiretoriosState extends State<Diretorios> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDirectoryDialog,
-        child: Icon(Icons.add),
+        backgroundColor: Color(0xff838dff), // Cor do botão
+        child: ImageIcon(
+          AssetImage('assets/images/AddDir.png'),
+          color: Colors.black, // Cor da imagem
+        ),
       ),
     );
   }
