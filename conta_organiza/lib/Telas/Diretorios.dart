@@ -171,8 +171,14 @@ class _DiretoriosState extends State<Diretorios> {
           mainAxisSpacing: 10,
           childAspectRatio: 3.5 / 2,
         ),
-        itemCount: _directories.length,
+        itemCount: _directories.length + 1,
         itemBuilder: (context, index) {
+          if (index == _directories.length) {
+            return SizedBox(
+              key: ValueKey('spacer'),
+              height: 80,
+            );
+          }
           Directory dir = _directories[index];
           return GestureDetector(
             key: ValueKey(dir.path),
