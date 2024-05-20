@@ -92,21 +92,49 @@ class _ListaContasState extends State<ListaContas> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xff838DFF),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/images/icon1.jpg')),
+            icon: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: SizedBox(
+                height: 35, // Ajuste o valor conforme necessário
+                width: 35, // Ajuste o valor conforme necessário
+                child: ImageIcon(AssetImage('assets/images/icon1.jpg')),
+              ),
+            ),
             label: 'TelaInicial',
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/images/icon2.jpg')),
+            icon: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: SizedBox(
+                height: 35, // Ajuste o valor conforme necessário
+                width: 35, // Ajuste o valor conforme necessário
+                child: ImageIcon(AssetImage('assets/images/icon2.jpg')),
+              ),
+            ),
             label: 'Diretórios',
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/images/icon3.png')),
+            icon: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: SizedBox(
+                height: 35, // Ajuste o valor conforme necessário
+                width: 35, // Ajuste o valor conforme necessário
+                child: ImageIcon(AssetImage('assets/images/icon3.png')),
+              ),
+            ),
             label: 'Pesquisar',
           ),
           BottomNavigationBarItem(
-            icon: ImageIcon(AssetImage('assets/images/icon4.jpg')),
+            icon: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: SizedBox(
+                height: 35, // Ajuste o valor conforme necessário
+                width: 35, // Ajuste o valor conforme necessário
+                child: ImageIcon(AssetImage('assets/images/icon4.jpg')),
+              ),
+            ),
             label: 'Configurações',
           ),
         ],
