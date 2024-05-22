@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'dart:io';
+
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 class Diretorios extends StatefulWidget {
   @override
@@ -191,10 +192,6 @@ class _DiretoriosState extends State<Diretorios> {
               );
             },
             child: Container(
-              // decoration: BoxDecoration(
-              //   borderRadius: BorderRadius.circular(10),
-              //   color: Colors.blue.shade100,
-              // ),
               child: Stack(
                 children: [
                   Positioned(
@@ -265,14 +262,74 @@ class ArquivosPage extends StatelessWidget {
 
   ArquivosPage({required this.diretorio});
 
+  Future<Map<String, Map<String, List<File>>>> _loadFiles() async {
+    final List<FileSystemEntity> entities = diretorio.listSync();
+    Map<String, Map<String, List<File>>> filesMap = {};
+
+    for (var entity in entities) {
+      if (entity is File) {
+        final fileName = entity.path.split('/').last;
+        final parts = fileName.split('_');
+        if (parts.length == 3) {
+          final year = parts[0];
+          final month = parts[1];
+          if (!filesMap.containsKey(year)) {
+            filesMap[year] = {};
+          }
+          if (!filesMap[year]!.containsKey(month)) {
+            filesMap[year]![month] = [];
+          }
+          filesMap[year]![month]!.add(entity);
+        }
+      }
+    }
+
+    return filesMap;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(diretorio.path.split('/').last),
       ),
-      body: Center(
-        child: Text('Arquivos em ${diretorio.path}'),
+      body: FutureBuilder<Map<String, Map<String, List<File>>>>(
+        future: _loadFiles(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Erro ao carregar arquivos'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('Nenhum arquivo encontrado'));
+          }
+
+          final filesMap = snapshot.data!;
+          return ListView.builder(
+            itemCount: filesMap.keys.length,
+            itemBuilder: (context, yearIndex) {
+              final year = filesMap.keys.elementAt(yearIndex);
+              final monthsMap = filesMap[year]!;
+              return ExpansionTile(
+                title: Text(year),
+                children: monthsMap.keys.map((month) {
+                  final files = monthsMap[month]!;
+                  return ExpansionTile(
+                    title: Text(month),
+                    children: files.map((file) {
+                      return ListTile(
+                        title: Text(file.path.split('/').last),
+                        onTap: () {
+                          // Ação ao clicar no arquivo
+                        },
+                      );
+                    }).toList(),
+                  );
+                }).toList(),
+              );
+            },
+          );
+        },
       ),
     );
   }

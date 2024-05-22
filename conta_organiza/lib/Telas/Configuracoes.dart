@@ -1,4 +1,8 @@
+import 'package:conta_organiza/Telas/TelaNotificacao.dart';
 import 'package:flutter/material.dart';
+import 'TelaPerfil.dart'; // Importe a tela de perfil
+import 'TelaConta.dart'; // Importe a tela de conta
+import 'TelaNotificacao.dart'; // Importe a tela de notificação
 
 class Configuracoes extends StatefulWidget {
   @override
@@ -28,7 +32,10 @@ class _ConfiguracoesState extends State<Configuracoes> {
             title: Text('Perfil'),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
-              // Navegue para a tela de configurações de perfil
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TelaPerfil()),
+              );
             },
           ),
           Container(
@@ -44,7 +51,10 @@ class _ConfiguracoesState extends State<Configuracoes> {
             title: Text('Conta'),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
-              // Navegue para a tela de configurações de conta
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TelaConta()),
+              );
             },
           ),
           Container(
@@ -61,7 +71,10 @@ class _ConfiguracoesState extends State<Configuracoes> {
             title: Text('Notificações'),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
-              // Navegue para a tela de configurações de notificações
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TelaNotificacao()),
+              );
             },
           ),
           Container(

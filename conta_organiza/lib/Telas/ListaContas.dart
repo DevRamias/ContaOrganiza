@@ -1,8 +1,8 @@
-import 'package:conta_organiza/Telas/Configuracoes.dart';
-import 'package:conta_organiza/Telas/Diretorios.dart';
-import 'package:conta_organiza/Telas/TelaInicialPage.dart';
-import 'package:conta_organiza/Telas/Pesquisar.dart';
 import 'package:flutter/material.dart';
+import 'TelaInicialPage.dart';
+import 'Diretorios.dart';
+import 'Pesquisar.dart';
+import 'Configuracoes.dart';
 
 class ListaContas extends StatefulWidget {
   @override
@@ -10,7 +10,8 @@ class ListaContas extends StatefulWidget {
 }
 
 class _ListaContasState extends State<ListaContas> {
-  int _selectedIndex = 0;
+  int _selectedIndex =
+      3; // Definindo o índice inicial como 3 (índice do ícone Configurações)
 
   final List<Widget> _pages = [
     TelaInicialPage(),

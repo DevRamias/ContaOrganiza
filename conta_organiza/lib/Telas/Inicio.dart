@@ -78,19 +78,19 @@ class TelaInicial extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: () {
-                      // Adicione a lógica para a política de privacidade aqui
-                    },
-                    child: const Text(
-                      "Política de privacidade",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.red,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     // Adicione a lógica para a política de privacidade aqui
+                  //   },
+                  //   // child: const Text(
+                  //   //   "Política de privacidade",
+                  //   //   style: TextStyle(
+                  //   //     fontSize: 16,
+                  //   //     color: Colors.red,
+                  //   //     decoration: TextDecoration.underline,
+                  //   //   ),
+                  //   // ),
+                  // ),
                 ],
               ),
             ),
