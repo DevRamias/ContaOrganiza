@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
@@ -257,29 +258,40 @@ class _DiretoriosState extends State<Diretorios> {
   }
 }
 
-class ArquivosPage extends StatelessWidget {
+class ArquivosPage extends StatefulWidget {
   final Directory diretorio;
 
   ArquivosPage({required this.diretorio});
 
+  @override
+  _ArquivosPageState createState() => _ArquivosPageState();
+}
+
+class _ArquivosPageState extends State<ArquivosPage> {
   Future<Map<String, Map<String, List<File>>>> _loadFiles() async {
-    final List<FileSystemEntity> entities = diretorio.listSync();
+    final List<FileSystemEntity> entities = widget.diretorio.listSync();
     Map<String, Map<String, List<File>>> filesMap = {};
 
     for (var entity in entities) {
       if (entity is File) {
         final fileName = entity.path.split('/').last;
-        final parts = fileName.split('_');
-        if (parts.length == 3) {
-          final year = parts[0];
-          final month = parts[1];
-          if (!filesMap.containsKey(year)) {
-            filesMap[year] = {};
+        final extension = fileName.split('.').last.toLowerCase();
+        if (extension == 'pdf' ||
+            extension == 'jpg' ||
+            extension == 'jpeg' ||
+            extension == 'png') {
+          final parts = fileName.split('_');
+          if (parts.length == 3) {
+            final year = parts[0];
+            final month = parts[1];
+            if (!filesMap.containsKey(year)) {
+              filesMap[year] = {};
+            }
+            if (!filesMap[year]!.containsKey(month)) {
+              filesMap[year]![month] = [];
+            }
+            filesMap[year]![month]!.add(entity);
           }
-          if (!filesMap[year]!.containsKey(month)) {
-            filesMap[year]![month] = [];
-          }
-          filesMap[year]![month]!.add(entity);
         }
       }
     }
@@ -287,11 +299,39 @@ class ArquivosPage extends StatelessWidget {
     return filesMap;
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      final directory = widget.diretorio;
+      final fileName =
+          '${DateTime.now().year}${DateTime.now().month}${pickedFile.name}';
+      final newFile = File('${directory.path}/$fileName');
+      await newFile.writeAsBytes(await pickedFile.readAsBytes());
+      setState(() {});
+    }
+  }
+
+  Future<void> _downloadFile(File file) async {
+    // Implementação do download do arquivo
+    // Isso pode variar dependendo da sua necessidade, como salvar em um local específico ou compartilhar o arquivo
+    // Aqui, apenas mostraremos um exemplo de como copiar o arquivo para um diretório de downloads
+
+    final directory = await getExternalStorageDirectory();
+    final newFile = File('${directory!.path}/${file.path.split('/').last}');
+    await newFile.writeAsBytes(await file.readAsBytes());
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Arquivo baixado para ${newFile.path}')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(diretorio.path.split('/').last),
+        title: Text(widget.diretorio.path.split('/').last),
       ),
       body: FutureBuilder<Map<String, Map<String, List<File>>>>(
         future: _loadFiles(),
@@ -319,6 +359,10 @@ class ArquivosPage extends StatelessWidget {
                     children: files.map((file) {
                       return ListTile(
                         title: Text(file.path.split('/').last),
+                        trailing: IconButton(
+                          icon: Icon(Icons.download),
+                          onPressed: () => _downloadFile(file),
+                        ),
                         onTap: () {
                           // Ação ao clicar no arquivo
                         },
@@ -330,6 +374,10 @@ class ArquivosPage extends StatelessWidget {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _pickImage,
+        child: Icon(Icons.camera_alt),
       ),
     );
   }
