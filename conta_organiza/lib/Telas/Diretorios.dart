@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
+import 'dart:io';
+import 'InfoConta.dart';
 
 class Diretorios extends StatefulWidget {
   @override
@@ -188,7 +187,7 @@ class _DiretoriosState extends State<Diretorios> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ArquivosPage(diretorio: dir),
+                  builder: (context) => InfoConta(directory: dir),
                 ),
               );
             },
@@ -248,136 +247,11 @@ class _DiretoriosState extends State<Diretorios> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDirectoryDialog,
-        backgroundColor: Color(0xff838dff), // Cor do botão
+        backgroundColor: Color(0xff838dff),
         child: ImageIcon(
           AssetImage('assets/images/AddDir.png'),
-          color: Colors.black, // Cor da imagem
+          color: Colors.black,
         ),
-      ),
-    );
-  }
-}
-
-class ArquivosPage extends StatefulWidget {
-  final Directory diretorio;
-
-  ArquivosPage({required this.diretorio});
-
-  @override
-  _ArquivosPageState createState() => _ArquivosPageState();
-}
-
-class _ArquivosPageState extends State<ArquivosPage> {
-  Future<Map<String, Map<String, List<File>>>> _loadFiles() async {
-    final List<FileSystemEntity> entities = widget.diretorio.listSync();
-    Map<String, Map<String, List<File>>> filesMap = {};
-
-    for (var entity in entities) {
-      if (entity is File) {
-        final fileName = entity.path.split('/').last;
-        final extension = fileName.split('.').last.toLowerCase();
-        if (extension == 'pdf' ||
-            extension == 'jpg' ||
-            extension == 'jpeg' ||
-            extension == 'png') {
-          final parts = fileName.split('_');
-          if (parts.length == 3) {
-            final year = parts[0];
-            final month = parts[1];
-            if (!filesMap.containsKey(year)) {
-              filesMap[year] = {};
-            }
-            if (!filesMap[year]!.containsKey(month)) {
-              filesMap[year]![month] = [];
-            }
-            filesMap[year]![month]!.add(entity);
-          }
-        }
-      }
-    }
-
-    return filesMap;
-  }
-
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      final directory = widget.diretorio;
-      final fileName =
-          '${DateTime.now().year}${DateTime.now().month}${pickedFile.name}';
-      final newFile = File('${directory.path}/$fileName');
-      await newFile.writeAsBytes(await pickedFile.readAsBytes());
-      setState(() {});
-    }
-  }
-
-  Future<void> _downloadFile(File file) async {
-    // Implementação do download do arquivo
-    // Isso pode variar dependendo da sua necessidade, como salvar em um local específico ou compartilhar o arquivo
-    // Aqui, apenas mostraremos um exemplo de como copiar o arquivo para um diretório de downloads
-
-    final directory = await getExternalStorageDirectory();
-    final newFile = File('${directory!.path}/${file.path.split('/').last}');
-    await newFile.writeAsBytes(await file.readAsBytes());
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Arquivo baixado para ${newFile.path}')),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.diretorio.path.split('/').last),
-      ),
-      body: FutureBuilder<Map<String, Map<String, List<File>>>>(
-        future: _loadFiles(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Erro ao carregar arquivos'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Nenhum arquivo encontrado'));
-          }
-
-          final filesMap = snapshot.data!;
-          return ListView.builder(
-            itemCount: filesMap.keys.length,
-            itemBuilder: (context, yearIndex) {
-              final year = filesMap.keys.elementAt(yearIndex);
-              final monthsMap = filesMap[year]!;
-              return ExpansionTile(
-                title: Text(year),
-                children: monthsMap.keys.map((month) {
-                  final files = monthsMap[month]!;
-                  return ExpansionTile(
-                    title: Text(month),
-                    children: files.map((file) {
-                      return ListTile(
-                        title: Text(file.path.split('/').last),
-                        trailing: IconButton(
-                          icon: Icon(Icons.download),
-                          onPressed: () => _downloadFile(file),
-                        ),
-                        onTap: () {
-                          // Ação ao clicar no arquivo
-                        },
-                      );
-                    }).toList(),
-                  );
-                }).toList(),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickImage,
-        child: Icon(Icons.camera_alt),
       ),
     );
   }

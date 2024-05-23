@@ -11,7 +11,7 @@ class ListaContas extends StatefulWidget {
 
 class _ListaContasState extends State<ListaContas> {
   int _selectedIndex =
-      3; // Definindo o índice inicial como 3 (índice do ícone Configurações)
+      0; // Definindo o índice inicial como 3 (índice do ícone Configurações)
 
   final List<Widget> _pages = [
     TelaInicialPage(),

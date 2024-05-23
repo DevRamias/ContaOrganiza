@@ -15,6 +15,7 @@ dependencies:
   reorderable_grid_view: ^2.0.3
   file_picker: ^5.0.0
   image_picker: ^0.8.4+4
+  intl: ^0.17.0 # Adicione esta linha
 
 dev_dependencies:
   flutter_test:

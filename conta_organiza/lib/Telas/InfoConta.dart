@@ -1,64 +1,199 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:intl/intl.dart';
 
 class InfoConta extends StatefulWidget {
-  final String directoryName;
+  final Directory directory;
 
-  InfoConta({required this.directoryName});
+  InfoConta({required this.directory});
 
   @override
   _InfoContaState createState() => _InfoContaState();
 }
 
 class _InfoContaState extends State<InfoConta> {
-  List<Map<String, dynamic>> files = [];
+  List<Map<String, dynamic>> _files = [];
 
-  Future<void> pickFiles() async {
+  @override
+  void initState() {
+    super.initState();
+    _loadFiles();
+  }
+
+  Future<void> _loadFiles() async {
+    final List<FileSystemEntity> entities = widget.directory.listSync();
+    List<Map<String, dynamic>> files = [];
+
+    for (var entity in entities) {
+      if (entity is File) {
+        final fileName = entity.path.split('/').last;
+        final parts = fileName.split('_');
+        if (parts.length == 3) {
+          files.add({
+            'file': entity,
+            'description': parts[0],
+            'date': DateFormat('yyyy-MM-dd').parse(parts[1]),
+            'type': parts[2],
+          });
+        }
+      }
+    }
+
+    setState(() {
+      _files = files;
+    });
+  }
+
+  Future<void> _pickFiles() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
 
     if (result != null) {
-      setState(() {
-        files.add({
-          'file': File(result.files.single.path!),
-          'date': DateTime.now(),
-        });
-      });
+      _showFileInfoDialog(File(result.files.single.path!));
     }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      _showFileInfoDialog(File(pickedFile.path));
+    }
+  }
+
+  Future<void> _showFileInfoDialog(File file) async {
+    String description = '';
+    DateTime date = DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Informações do arquivo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              onChanged: (value) {
+                description = value;
+              },
+              decoration: InputDecoration(labelText: 'Descrição'),
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Text('Vencimento: '),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: date,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          date = pickedDate;
+                        });
+                      }
+                    },
+                    child: Text(
+                      DateFormat('yyyy-MM-dd').format(date),
+                      style: TextStyle(decoration: TextDecoration.underline),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final fileName =
+                  '${description}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+              final newFile =
+                  await file.copy('${widget.directory.path}/$fileName');
+              await _loadFiles();
+              Navigator.of(context).pop();
+            },
+            child: Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteFile(File file) async {
+    await file.delete();
+    _loadFiles();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.directoryName),
+        title: Text(widget.directory.path.split('/').last),
       ),
       body: Column(
         children: [
-          ElevatedButton.icon(
-            onPressed: pickFiles,
-            icon: Icon(Icons.upload_file),
-            label: Text('Carregar Arquivo'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xff838DFF),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _pickImage,
+                  icon: Icon(Icons.camera_alt),
+                  label: Text('Tirar Foto'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _pickFiles,
+                  icon: Icon(Icons.file_upload),
+                  label: Text('Carregar Arquivo'),
+                ),
+              ],
             ),
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: files.length,
+              itemCount: _files.length,
               itemBuilder: (context, index) {
-                File file = files[index]['file'];
-                String fileName = file.path.split('/').last;
-                DateTime fileDate = files[index]['date'];
+                final fileData = _files[index];
+                final file = fileData['file'];
+                final description = fileData['description'];
+                final date = fileData['date'];
+                final type = fileData['type'];
+
+                IconData iconData;
+                if (type == 'pdf') {
+                  iconData = Icons.picture_as_pdf;
+                } else {
+                  iconData = Icons.image;
+                }
+
                 return ListTile(
-                  title: Text(fileName),
-                  subtitle: Text('Data: ${fileDate.toLocal()}'),
-                  trailing: Icon(Icons.chevron_right),
+                  leading: Icon(iconData),
+                  title: Text(description),
+                  subtitle: Text(
+                      'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _deleteFile(file),
+                  ),
                   onTap: () {
-                    // Navegar para visualização ou outra ação
+                    // Ação ao clicar no arquivo
                   },
                 );
               },
