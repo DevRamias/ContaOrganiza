@@ -23,6 +23,10 @@ class _InfoContaState extends State<InfoConta> {
   }
 
   Future<void> _loadFiles() async {
+    if (!widget.directory.existsSync()) {
+      await widget.directory.create(recursive: true);
+    }
+
     final List<FileSystemEntity> entities = widget.directory.listSync();
     List<Map<String, dynamic>> files = [];
 
@@ -53,7 +57,8 @@ class _InfoContaState extends State<InfoConta> {
     );
 
     if (result != null) {
-      _showFileInfoDialog(File(result.files.single.path!));
+      File pickedFile = File(result.files.single.path!);
+      await _showFileInfoDialog(pickedFile);
     }
   }
 
@@ -62,7 +67,8 @@ class _InfoContaState extends State<InfoConta> {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
     if (pickedFile != null) {
-      _showFileInfoDialog(File(pickedFile.path));
+      File imageFile = File(pickedFile.path);
+      await _showFileInfoDialog(imageFile);
     }
   }
 
@@ -123,9 +129,19 @@ class _InfoContaState extends State<InfoConta> {
             onPressed: () async {
               final fileName =
                   '${description}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
-              final newFile =
-                  await file.copy('${widget.directory.path}/$fileName');
+              final newFilePath = '${widget.directory.path}/$fileName';
+
+              // Certifique-se de que o diretório de destino exista
+              if (!widget.directory.existsSync()) {
+                await widget.directory.create(recursive: true);
+              }
+
+              // Copie o arquivo para o novo local
+              await file.copy(newFilePath);
+
+              // Carregue os arquivos novamente para atualizar a lista
               await _loadFiles();
+
               Navigator.of(context).pop();
             },
             child: Text('Salvar'),
