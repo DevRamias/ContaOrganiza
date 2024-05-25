@@ -54,9 +54,6 @@ class _PesquisarState extends State<Pesquisar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Pesquisar Arquivos'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
