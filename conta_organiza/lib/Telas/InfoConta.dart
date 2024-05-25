@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class InfoConta extends StatefulWidget {
   final Directory directory;
@@ -19,7 +20,9 @@ class _InfoContaState extends State<InfoConta> {
   @override
   void initState() {
     super.initState();
-    _loadFiles();
+    initializeDateFormatting('pt_BR', null).then((_) {
+      _loadFiles();
+    });
   }
 
   Future<void> _loadFiles() async {
@@ -44,6 +47,9 @@ class _InfoContaState extends State<InfoConta> {
         }
       }
     }
+
+    files.sort((a, b) =>
+        b['date'].compareTo(a['date'])); // Ordena os arquivos pela data
 
     setState(() {
       _files = files;
@@ -127,8 +133,10 @@ class _InfoContaState extends State<InfoConta> {
           ),
           TextButton(
             onPressed: () async {
+              String sanitizedDescription =
+                  description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
               final fileName =
-                  '${description}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+                  '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
               final newFilePath = '${widget.directory.path}/$fileName';
 
               // Certifique-se de que o diretório de destino exista
@@ -158,64 +166,95 @@ class _InfoContaState extends State<InfoConta> {
 
   @override
   Widget build(BuildContext context) {
+    Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
+
+    for (var fileData in _files) {
+      final file = fileData['file'];
+      final description = fileData['description'];
+      final date = fileData['date'];
+      final type = fileData['type'];
+
+      String year = DateFormat('yyyy').format(date);
+      String month = DateFormat('MMMM', 'pt_BR').format(date);
+
+      if (!groupedFiles.containsKey(year)) {
+        groupedFiles[year] = {};
+      }
+
+      if (!groupedFiles[year]!.containsKey(month)) {
+        groupedFiles[year]![month] = [];
+      }
+
+      groupedFiles[year]![month]!.add(fileData);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.directory.path.split('/').last),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _pickImage,
-                  icon: Icon(Icons.camera_alt),
-                  label: Text('Tirar Foto'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _pickFiles,
-                  icon: Icon(Icons.file_upload),
-                  label: Text('Carregar Arquivo'),
-                ),
-              ],
-            ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add_a_photo),
+            onPressed: _pickImage,
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _files.length,
-              itemBuilder: (context, index) {
-                final fileData = _files[index];
-                final file = fileData['file'];
-                final description = fileData['description'];
-                final date = fileData['date'];
-                final type = fileData['type'];
-
-                IconData iconData;
-                if (type == 'pdf') {
-                  iconData = Icons.picture_as_pdf;
-                } else {
-                  iconData = Icons.image;
-                }
-
-                return ListTile(
-                  leading: Icon(iconData),
-                  title: Text(description),
-                  subtitle: Text(
-                      'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => _deleteFile(file),
-                  ),
-                  onTap: () {
-                    // Ação ao clicar no arquivo
-                  },
-                );
-              },
-            ),
+          IconButton(
+            icon: Icon(Icons.attach_file),
+            onPressed: _pickFiles,
           ),
         ],
+      ),
+      body: ListView(
+        children: groupedFiles.entries.map((yearEntry) {
+          String year = yearEntry.key;
+          Map<String, List<Map<String, dynamic>>> months = yearEntry.value;
+
+          return ExpansionTile(
+            leading: Container(
+              width: 4,
+              color: Colors.grey,
+            ),
+            title: Text(year,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            children: months.entries.map((monthEntry) {
+              String month = monthEntry.key;
+              List<Map<String, dynamic>> files = monthEntry.value;
+
+              return ExpansionTile(
+                leading: Container(
+                  width: 4,
+                  color: Colors.grey,
+                ),
+                title: Text(month, style: TextStyle(fontSize: 18)),
+                children: files.map((fileData) {
+                  final file = fileData['file'];
+                  final description = fileData['description'];
+                  final date = fileData['date'];
+                  final type = fileData['type'];
+
+                  IconData iconData;
+                  if (type == 'pdf') {
+                    iconData = Icons.picture_as_pdf;
+                  } else {
+                    iconData = Icons.image;
+                  }
+
+                  return ListTile(
+                    leading: Icon(iconData),
+                    title: Text(description),
+                    subtitle: Text(
+                        'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () => _deleteFile(file),
+                    ),
+                    onTap: () {
+                      // Ação ao clicar no arquivo
+                    },
+                  );
+                }).toList(),
+              );
+            }).toList(),
+          );
+        }).toList(),
       ),
     );
   }
