@@ -3,6 +3,9 @@ import 'TelaInicialPage.dart';
 import 'Diretorios.dart';
 import 'Pesquisar.dart';
 import 'Configuracoes.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:intl/intl.dart';
 
 class ListaContas extends StatefulWidget {
   @override
@@ -10,22 +13,48 @@ class ListaContas extends StatefulWidget {
 }
 
 class _ListaContasState extends State<ListaContas> {
-  int _selectedIndex =
-      0; // Definindo o índice inicial como 3 (índice do ícone Configurações)
+  int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    TelaInicialPage(),
-    Diretorios(),
-    Pesquisar(),
-    Configuracoes(),
-  ];
+  List<Map<String, dynamic>> _files = [];
+  bool _isLoading = true;
 
-  final List<String> _titles = [
-    'Tela Inicial',
-    'Diretórios',
-    'Pesquisar',
-    'Configurações',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadAllFiles();
+  }
+
+  Future<void> _loadAllFiles() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final List<FileSystemEntity> entities = directory.listSync(recursive: true);
+
+    List<Map<String, dynamic>> files = [];
+    for (var entity in entities) {
+      if (entity is File) {
+        final fileName = entity.path.split('/').last;
+        final parts = fileName.split('_');
+        if (parts.length == 3) {
+          try {
+            final date = DateFormat('yyyy-MM-dd').parse(parts[1]);
+            files.add({
+              'file': entity,
+              'description': parts[0],
+              'date': date,
+              'type': parts[2],
+            });
+          } catch (e) {
+            // Se ocorrer um erro ao analisar a data, ignore este arquivo
+            print('Erro ao analisar data no arquivo: $fileName');
+          }
+        }
+      }
+    }
+
+    setState(() {
+      _files = files;
+      _isLoading = false;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -35,6 +64,22 @@ class _ListaContasState extends State<ListaContas> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _pages = [
+      TelaInicialPage(),
+      Diretorios(),
+      _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Pesquisar(files: _files),
+      Configuracoes(),
+    ];
+
+    final List<String> _titles = [
+      'Tela Inicial',
+      'Diretórios',
+      'Pesquisar',
+      'Configurações',
+    ];
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -98,8 +143,8 @@ class _ListaContasState extends State<ListaContas> {
             icon: Padding(
               padding: const EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
-                height: 35, // Ajuste o valor conforme necessário
-                width: 35, // Ajuste o valor conforme necessário
+                height: 35,
+                width: 35,
                 child: ImageIcon(AssetImage('assets/images/icon1.jpg')),
               ),
             ),
@@ -109,8 +154,8 @@ class _ListaContasState extends State<ListaContas> {
             icon: Padding(
               padding: const EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
-                height: 35, // Ajuste o valor conforme necessário
-                width: 35, // Ajuste o valor conforme necessário
+                height: 35,
+                width: 35,
                 child: ImageIcon(AssetImage('assets/images/icon2.jpg')),
               ),
             ),
@@ -120,8 +165,8 @@ class _ListaContasState extends State<ListaContas> {
             icon: Padding(
               padding: const EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
-                height: 35, // Ajuste o valor conforme necessário
-                width: 35, // Ajuste o valor conforme necessário
+                height: 35,
+                width: 35,
                 child: ImageIcon(AssetImage('assets/images/icon3.png')),
               ),
             ),
@@ -131,8 +176,8 @@ class _ListaContasState extends State<ListaContas> {
             icon: Padding(
               padding: const EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
-                height: 35, // Ajuste o valor conforme necessário
-                width: 35, // Ajuste o valor conforme necessário
+                height: 35,
+                width: 35,
                 child: ImageIcon(AssetImage('assets/images/icon4.jpg')),
               ),
             ),
