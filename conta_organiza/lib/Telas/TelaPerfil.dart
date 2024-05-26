@@ -1,3 +1,4 @@
+import 'package:conta_organiza/Telas/CustomAppBar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -64,7 +65,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Digitar novo usuário'),
+          title: Text('Digitar Nome de Usuário'),
           content: TextField(
             controller: _nameController,
             decoration: InputDecoration(
@@ -127,41 +128,79 @@ class _TelaPerfilState extends State<TelaPerfil> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Editar Perfil'),
+      appBar: CustomAppBar(
+        userName: _userName,
+        userProfileImage: _userProfileImage,
+        title: 'Perfil',
       ),
-      body: ListView(
+      body: Stack(
         children: [
-          ListTile(
-            leading: CircleAvatar(
-              radius: 30,
-              backgroundImage: _image != null
-                  ? FileImage(_image!)
-                  : _userProfileImage.startsWith('assets/')
-                      ? AssetImage(_userProfileImage) as ImageProvider
-                      : FileImage(File(_userProfileImage)),
-            ),
-            title: Text('Trocar Foto do Perfil'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: _showImageSourceDialog,
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.black)),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.edit),
-            title: Text('Editar nome de usuáro'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: _showEditNameDialog,
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.black)),
-            ),
+          ListView(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    margin: EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color:
+                          Color(0xffD2D6FF), // Cor de fundo ao redor do botão
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.arrow_back, color: Colors.black),
+                        SizedBox(width: 5),
+                        Text(
+                          'Voltar',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 12,
+                  backgroundImage: _image != null
+                      ? FileImage(_image!)
+                      : _userProfileImage.startsWith('assets/')
+                          ? AssetImage(_userProfileImage) as ImageProvider
+                          : FileImage(File(_userProfileImage)),
+                ),
+                title: Text('Trocar Foto do Perfil'),
+                trailing: Icon(Icons.chevron_right),
+                onTap: _showImageSourceDialog,
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.black)),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.edit),
+                title: Text('Editar Nome de Usuário'),
+                trailing: Icon(Icons.chevron_right),
+                onTap: _showEditNameDialog,
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Colors.black)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
