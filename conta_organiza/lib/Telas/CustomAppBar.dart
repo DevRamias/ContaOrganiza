@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
   final String userName;
-  final String profileImagePath;
-  final String iconPath;
-  final VoidCallback onIconPressed; // Adiciona a função de callback
+  final String userProfileImage;
+  final String title;
 
   CustomAppBar({
-    required this.title,
     required this.userName,
-    required this.profileImagePath,
-    required this.iconPath,
-    required this.onIconPressed, // Adiciona a função de callback
+    required this.userProfileImage,
+    required this.title,
   });
 
   @override
@@ -27,7 +24,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: AssetImage(profileImagePath),
+                backgroundImage: userProfileImage.startsWith('assets/')
+                    ? AssetImage(userProfileImage) as ImageProvider
+                    : FileImage(File(userProfileImage)),
               ),
               const SizedBox(width: 10),
               Text(
@@ -40,10 +39,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          IconButton(
-            icon: Image.asset(iconPath, height: 30),
-            onPressed:
-                onIconPressed, // Chama a função de callback ao pressionar o ícone
+          Image.asset(
+            'assets/images/Vector.png',
+            height: 30,
           ),
         ],
       ),
@@ -74,5 +72,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(110); // Altura total do AppBar
+  Size get preferredSize => Size.fromHeight(100);
 }

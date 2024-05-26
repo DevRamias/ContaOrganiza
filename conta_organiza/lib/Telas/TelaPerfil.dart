@@ -1,62 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TelaPerfil extends StatefulWidget {
+  final Function(String, String) onUpdateProfile;
+
+  TelaPerfil({required this.onUpdateProfile});
+
   @override
   _TelaPerfilState createState() => _TelaPerfilState();
 }
 
 class _TelaPerfilState extends State<TelaPerfil> {
-  File? _profileImage;
-  late TextEditingController _nameController;
+  final TextEditingController _nameController = TextEditingController();
+  File? _image;
   String _userName = 'Nome do Usuário';
+  String _userProfileImage = 'assets/images/Foto do perfil.png';
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: _userName);
-    _loadUserProfile();
+    _loadProfile();
   }
 
-  Future<void> _loadUserProfile() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
       _userName = prefs.getString('userName') ?? 'Nome do Usuário';
-      String? imagePath = prefs.getString('profileImagePath');
-      if (imagePath != null) {
-        _profileImage = File(imagePath);
-      }
+      _userProfileImage = prefs.getString('userProfileImage') ??
+          'assets/images/Foto do perfil.png';
+      _nameController.text = _userName;
     });
   }
 
   Future<void> _pickImage() async {
-    try {
-      final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-      );
-      if (pickedFile != null) {
-        setState(() {
-          _profileImage = File(pickedFile.path);
-        });
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('profileImagePath', pickedFile.path);
-      }
-    } catch (e) {
-      print('Erro ao selecionar imagem: $e');
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+        _userProfileImage = _image!.path;
+      });
+      _saveProfile();
     }
   }
 
-  Future<void> _changeUserName() async {
-    await showDialog(
+  Future<void> _saveProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', _userName);
+    await prefs.setString('userProfileImage', _userProfileImage);
+    widget.onUpdateProfile(_userName, _userProfileImage);
+  }
+
+  void _updateName() {
+    setState(() {
+      _userName = _nameController.text;
+    });
+    _saveProfile();
+  }
+
+  void _showEditNameDialog() {
+    showDialog(
       context: context,
-      builder: (context) {
+      builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Alterar Nome de Usuário'),
+          title: Text('Editar Nome'),
           content: TextField(
             controller: _nameController,
-            decoration: InputDecoration(hintText: "Digite o novo nome"),
+            decoration: InputDecoration(
+              labelText: 'Nome',
+              border: OutlineInputBorder(),
+            ),
           ),
           actions: [
             TextButton(
@@ -65,14 +80,9 @@ class _TelaPerfilState extends State<TelaPerfil> {
               },
               child: Text('Cancelar'),
             ),
-            TextButton(
-              onPressed: () async {
-                String newName = _nameController.text;
-                SharedPreferences prefs = await SharedPreferences.getInstance();
-                prefs.setString('userName', newName);
-                setState(() {
-                  _userName = newName;
-                });
+            ElevatedButton(
+              onPressed: () {
+                _updateName();
                 Navigator.of(context).pop();
               },
               child: Text('Salvar'),
@@ -87,40 +97,43 @@ class _TelaPerfilState extends State<TelaPerfil> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Perfil'),
+        title: Text('Editar Perfil'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: _profileImage != null
-                      ? FileImage(_profileImage!)
-                      : AssetImage('assets/images/Foto do perfil.png')
-                          as ImageProvider),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              radius: 30,
+              backgroundImage: _image != null
+                  ? FileImage(_image!)
+                  : _userProfileImage.startsWith('assets/')
+                      ? AssetImage(_userProfileImage) as ImageProvider
+                      : FileImage(File(_userProfileImage)),
             ),
-            SizedBox(height: 20),
-            Text(
-              _userName,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            title: Text('Trocar Foto do Perfil'),
+            trailing: Icon(Icons.chevron_right),
+            onTap: _pickImage,
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.black)),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _changeUserName,
-              child: Text('Alterar Nome'),
+          ),
+          ListTile(
+            leading: Icon(Icons.edit),
+            title: Text('Editar Nome'),
+            trailing: Icon(Icons.chevron_right),
+            onTap: _showEditNameDialog,
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.black)),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
   }
 }

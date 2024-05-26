@@ -6,6 +6,8 @@ import 'Configuracoes.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import 'CustomAppBar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ListaContas extends StatefulWidget {
   @override
@@ -14,6 +16,8 @@ class ListaContas extends StatefulWidget {
 
 class _ListaContasState extends State<ListaContas> {
   int _selectedIndex = 0;
+  String _userName = 'Nome do Usuário';
+  String _userProfileImage = 'assets/images/Foto do perfil.png';
 
   List<Map<String, dynamic>> _files = [];
   bool _isLoading = true;
@@ -22,6 +26,7 @@ class _ListaContasState extends State<ListaContas> {
   void initState() {
     super.initState();
     _loadAllFiles();
+    _loadProfile();
   }
 
   Future<void> _loadAllFiles() async {
@@ -56,9 +61,25 @@ class _ListaContasState extends State<ListaContas> {
     });
   }
 
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
+      _userProfileImage = prefs.getString('userProfileImage') ??
+          'assets/images/Foto do perfil.png';
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void _updateProfile(String newName, String newImage) {
+    setState(() {
+      _userName = newName;
+      _userProfileImage = newImage;
     });
   }
 
@@ -70,7 +91,7 @@ class _ListaContasState extends State<ListaContas> {
       _isLoading
           ? Center(child: CircularProgressIndicator())
           : Pesquisar(files: _files),
-      Configuracoes(),
+      Configuracoes(onUpdateProfile: _updateProfile),
     ];
 
     final List<String> _titles = [
@@ -81,59 +102,10 @@ class _ListaContasState extends State<ListaContas> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xff838DFF),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage:
-                      AssetImage('assets/images/Foto do perfil.png'),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Nome do Usuário',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ],
-            ),
-            Image.asset(
-              'assets/images/Vector.png',
-              height: 30,
-            ),
-          ],
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(55),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  _titles[_selectedIndex],
-                  style: const TextStyle(
-                    fontSize: 30,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ),
-              Container(
-                height: 2,
-                color: Colors.black,
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ],
-          ),
-        ),
+      appBar: CustomAppBar(
+        userName: _userName,
+        userProfileImage: _userProfileImage,
+        title: _titles[_selectedIndex],
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

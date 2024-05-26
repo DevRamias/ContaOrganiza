@@ -1,10 +1,13 @@
-import 'package:conta_organiza/Telas/TelaNotificacao.dart';
 import 'package:flutter/material.dart';
-import 'TelaPerfil.dart'; // Importe a tela de perfil
-import 'TelaConta.dart'; // Importe a tela de conta
-import 'TelaNotificacao.dart'; // Importe a tela de notificação
+import 'TelaPerfil.dart';
+import 'TelaConta.dart';
+import 'TelaNotificacao.dart';
 
 class Configuracoes extends StatefulWidget {
+  final Function(String, String) onUpdateProfile;
+
+  Configuracoes({required this.onUpdateProfile});
+
   @override
   _ConfiguracoesState createState() => _ConfiguracoesState();
 }
@@ -34,7 +37,11 @@ class _ConfiguracoesState extends State<Configuracoes> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TelaPerfil()),
+                MaterialPageRoute(
+                  builder: (context) => TelaPerfil(
+                    onUpdateProfile: widget.onUpdateProfile,
+                  ),
+                ),
               );
             },
           ),
