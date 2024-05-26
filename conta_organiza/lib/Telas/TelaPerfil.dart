@@ -96,11 +96,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
             GestureDetector(
               onTap: _pickImage,
               child: CircleAvatar(
-                radius: 50,
-                backgroundImage: _profileImage != null
-                    ? FileImage(_profileImage!)
-                    : AssetImage('assets/images/Foto do perfil.png'),
-              ),
+                  radius: 50,
+                  backgroundImage: _profileImage != null
+                      ? FileImage(_profileImage!)
+                      : AssetImage('assets/images/Foto do perfil.png')
+                          as ImageProvider),
             ),
             SizedBox(height: 20),
             Text(
