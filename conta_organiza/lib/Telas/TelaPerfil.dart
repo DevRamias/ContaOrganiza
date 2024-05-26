@@ -1,123 +1,126 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
-class TelaPerfil extends StatelessWidget {
+class TelaPerfil extends StatefulWidget {
+  @override
+  _TelaPerfilState createState() => _TelaPerfilState();
+}
+
+class _TelaPerfilState extends State<TelaPerfil> {
+  File? _profileImage;
+  late TextEditingController _nameController;
+  String _userName = 'Nome do Usuário';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: _userName);
+    _loadUserProfile();
+  }
+
+  Future<void> _loadUserProfile() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
+      String? imagePath = prefs.getString('profileImagePath');
+      if (imagePath != null) {
+        _profileImage = File(imagePath);
+      }
+    });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+        });
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('profileImagePath', pickedFile.path);
+      }
+    } catch (e) {
+      print('Erro ao selecionar imagem: $e');
+    }
+  }
+
+  Future<void> _changeUserName() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Alterar Nome de Usuário'),
+          content: TextField(
+            controller: _nameController,
+            decoration: InputDecoration(hintText: "Digite o novo nome"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                String newName = _nameController.text;
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                prefs.setString('userName', newName);
+                setState(() {
+                  _userName = newName;
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text('Salvar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: const Color(0xff838DFF),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        title: Text('Perfil'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage:
-                      AssetImage('assets/images/Foto do perfil.png'),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Nome do Usuário',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ],
+            GestureDetector(
+              onTap: _pickImage,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: _profileImage != null
+                    ? FileImage(_profileImage!)
+                    : AssetImage('assets/images/Foto do perfil.png'),
+              ),
             ),
-            Image.asset(
-              'assets/images/Vector.png',
-              height: 30,
+            SizedBox(height: 20),
+            Text(
+              _userName,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _changeUserName,
+              child: Text('Alterar Nome'),
             ),
           ],
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(55),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: const Text(
-                  'Perfil',
-                  style: TextStyle(
-                    fontSize: 30,
-                    color: Colors.white,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ),
-              Container(
-                height: 2,
-                color: Colors.black,
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16.0),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              decoration: BoxDecoration(
-                color: Color(0xffD2D6FF), // Cor de fundo ao redor do botão
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_back, color: Colors.black),
-                  SizedBox(width: 5),
-                  Text(
-                    'Voltar',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontFamily: 'Inter',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 16.0),
-          ListTile(
-            title: Text('Foto do Perfil'),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                // Ação para editar a foto do perfil
-              },
-            ),
-          ),
-          Divider(color: Colors.black),
-          ListTile(
-            title: Text('Nome de Usuário'),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                // Ação para editar o nome de usuário
-              },
-            ),
-          ),
-          Divider(color: Colors.black),
-          ListTile(
-            title: Text('Email do Usuário'),
-            trailing: IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () {
-                // Ação para editar o email do usuário
-              },
-            ),
-          ),
-          Divider(color: Colors.black),
-        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 }
