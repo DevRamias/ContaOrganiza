@@ -64,7 +64,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Editar Nome'),
+          title: Text('Digitar novo usuário'),
           content: TextField(
             controller: _nameController,
             decoration: InputDecoration(
@@ -153,7 +153,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
           ),
           ListTile(
             leading: Icon(Icons.edit),
-            title: Text('Editar Nome'),
+            title: Text('Editar nome de usuáro'),
             trailing: Icon(Icons.chevron_right),
             onTap: _showEditNameDialog,
           ),
