@@ -34,9 +34,8 @@ class _TelaPerfilState extends State<TelaPerfil> {
     });
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
@@ -93,6 +92,38 @@ class _TelaPerfilState extends State<TelaPerfil> {
     );
   }
 
+  void _showImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Escolha uma opção'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt),
+                title: Text('Tirar Foto'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Escolher da Galeria'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,7 +143,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
             ),
             title: Text('Trocar Foto do Perfil'),
             trailing: Icon(Icons.chevron_right),
-            onTap: _pickImage,
+            onTap: _showImageSourceDialog,
           ),
           Container(
             margin: EdgeInsets.symmetric(horizontal: 6.0),
