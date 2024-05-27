@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class TelaPerfil extends StatefulWidget {
   final Function(String, String) onUpdateProfile;
@@ -18,6 +21,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
   File? _image;
   String _userName = 'Nome do Usuário';
   String _userProfileImage = 'assets/images/Foto do perfil.png';
+  User? _currentUser;
 
   @override
   void initState() {
@@ -26,13 +30,27 @@ class _TelaPerfilState extends State<TelaPerfil> {
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
-      _userProfileImage = prefs.getString('userProfileImage') ??
-          'assets/images/Foto do perfil.png';
-      _nameController.text = _userName;
-    });
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
+      setState(() {
+        _userName = userDoc['name'] ?? 'Nome do Usuário';
+        _userProfileImage =
+            userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+        _nameController.text = _userName;
+      });
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _userName = prefs.getString('userName') ?? 'Nome do Usuário';
+        _userProfileImage = prefs.getString('userProfileImage') ??
+            'assets/images/Foto do perfil.png';
+        _nameController.text = _userName;
+      });
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -40,16 +58,46 @@ class _TelaPerfilState extends State<TelaPerfil> {
     if (pickedFile != null) {
       setState(() {
         _image = File(pickedFile.path);
-        _userProfileImage = _image!.path;
       });
-      _saveProfile();
+      await _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_image == null || _currentUser == null) return;
+
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child(_currentUser!.uid);
+      await storageRef.putFile(_image!);
+      final imageUrl = await storageRef.getDownloadURL();
+
+      setState(() {
+        _userProfileImage = imageUrl;
+      });
+
+      await _saveProfile();
+    } catch (e) {
+      print('Erro ao fazer upload da imagem: $e');
     }
   }
 
   Future<void> _saveProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', _userName);
-    await prefs.setString('userProfileImage', _userProfileImage);
+    if (_currentUser != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .set({
+        'name': _userName,
+        'profileImage': _userProfileImage,
+      }, SetOptions(merge: true));
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', _userName);
+      await prefs.setString('userProfileImage', _userProfileImage);
+    }
     widget.onUpdateProfile(_userName, _userProfileImage);
   }
 
@@ -132,6 +180,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
         userName: _userName,
         userProfileImage: _userProfileImage,
         title: 'Perfil',
+        onUpdateProfileImage: (newImage) {
+          setState(() {
+            _userProfileImage = newImage;
+          });
+        },
       ),
       body: Stack(
         children: [
@@ -176,7 +229,7 @@ class _TelaPerfilState extends State<TelaPerfil> {
                       ? FileImage(_image!)
                       : _userProfileImage.startsWith('assets/')
                           ? AssetImage(_userProfileImage) as ImageProvider
-                          : FileImage(File(_userProfileImage)),
+                          : NetworkImage(_userProfileImage),
                 ),
                 title: Text('Trocar Foto do Perfil'),
                 trailing: Icon(Icons.chevron_right),

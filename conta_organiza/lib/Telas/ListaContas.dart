@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'TelaInicialPage.dart';
 import 'Diretorios.dart';
 import 'Pesquisar.dart';
@@ -62,12 +65,43 @@ class _ListaContasState extends State<ListaContas> {
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
-      _userProfileImage = prefs.getString('userProfileImage') ??
-          'assets/images/Foto do perfil.png';
+    await _retryWithBackoff(() async {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        setState(() {
+          _userName = userDoc['name'] ?? 'Nome do Usuário';
+          _userProfileImage =
+              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+        });
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        setState(() {
+          _userName = prefs.getString('userName') ?? 'Nome do Usuário';
+          _userProfileImage = prefs.getString('userProfileImage') ??
+              'assets/images/Foto do perfil.png';
+        });
+      }
     });
+  }
+
+  Future<void> _retryWithBackoff(Function action, {int maxRetries = 5}) async {
+    int retryCount = 0;
+    while (retryCount < maxRetries) {
+      try {
+        await action();
+        return;
+      } catch (e) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          rethrow;
+        }
+        await Future.delayed(Duration(seconds: 2 * retryCount));
+      }
+    }
   }
 
   void _onItemTapped(int index) {
@@ -106,6 +140,7 @@ class _ListaContasState extends State<ListaContas> {
         userName: _userName,
         userProfileImage: _userProfileImage,
         title: _titles[_selectedIndex],
+        onUpdateProfileImage: (String) {},
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

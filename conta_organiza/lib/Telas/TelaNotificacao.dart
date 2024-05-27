@@ -80,6 +80,7 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
         userName: _userName,
         userProfileImage: _userProfileImage,
         title: 'Notificações',
+        onUpdateProfileImage: (String) {},
       ),
       body: Stack(
         children: [
