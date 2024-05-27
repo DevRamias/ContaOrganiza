@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'Telas/CadastrarUsuario.dart';
-import 'Telas/ConfirmarEmail.dart';
-import 'Telas/ListaContas.dart';
-import 'Telas/Inicio.dart';
-import 'Telas/Login.dart'; // Importe a tela de login
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -20,14 +17,21 @@ class MyApp extends StatelessWidget {
         primaryColor: const Color(0xFF2196f3),
         canvasColor: const Color(0xFFfafafa),
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => TelaInicial(),
-        '/cadastrar': (context) => CadastrarUsuario(),
-        '/confirmar-email': (context) => ConfirmarEmail(),
-        '/lista-contas': (context) => ListaContas(),
-        '/login': (context) => Login(), // Adiciona a rota da tela de login
-      },
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Teste de Conexão Firebase'),
+      ),
+      body: Center(
+        child: Text('Firebase inicializado com sucesso!'),
+      ),
     );
   }
 }
