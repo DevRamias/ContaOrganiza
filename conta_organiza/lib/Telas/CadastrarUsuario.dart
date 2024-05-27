@@ -1,6 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class CadastrarUsuario extends StatelessWidget {
+class CadastrarUsuario extends StatefulWidget {
+  @override
+  _CadastrarUsuarioState createState() => _CadastrarUsuarioState();
+}
+
+class _CadastrarUsuarioState extends State<CadastrarUsuario> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _nomeUsuarioController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+
+  Future<void> _cadastrar() async {
+    try {
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _senhaController.text,
+      );
+      print("Usuário cadastrado: ${userCredential.user}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Cadastro realizado com sucesso!")),
+      );
+      Navigator.pushNamed(context, '/confirmar-email');
+    } catch (e) {
+      print("Erro ao cadastrar: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao cadastrar: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +85,7 @@ class CadastrarUsuario extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _nomeController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -75,6 +108,7 @@ class CadastrarUsuario extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _emailController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -97,6 +131,7 @@ class CadastrarUsuario extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _nomeUsuarioController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -119,9 +154,11 @@ class CadastrarUsuario extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _senhaController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
+                obscureText: true,
               ),
             ),
             const SizedBox(height: 30),
@@ -140,9 +177,7 @@ class CadastrarUsuario extends StatelessWidget {
                       horizontal: 20), // Ajusta o padding horizontal
                   minimumSize: const Size(240, 55), // Largura e altura mínimas
                 ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/confirmar-email');
-                },
+                onPressed: _cadastrar,
                 child: const Text(
                   "Cadastrar",
                   style: TextStyle(
