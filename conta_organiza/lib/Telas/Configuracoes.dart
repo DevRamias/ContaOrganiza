@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'TelaPerfil.dart';
 import 'TelaConta.dart';
 import 'TelaNotificacao.dart';
@@ -13,6 +14,23 @@ class Configuracoes extends StatefulWidget {
 }
 
 class _ConfiguracoesState extends State<Configuracoes> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _logout() async {
+    try {
+      await _auth.signOut();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Deslogado com sucesso!")),
+      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } catch (e) {
+      print("Erro ao deslogar: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao deslogar: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,9 +111,7 @@ class _ConfiguracoesState extends State<Configuracoes> {
           const SizedBox(height: 20),
           Center(
             child: ElevatedButton.icon(
-              onPressed: () {
-                // Ação para deslogar da conta
-              },
+              onPressed: _logout,
               icon: Icon(
                 Icons.power_settings_new,
                 color: Colors.black, // Cor do ícone preto
