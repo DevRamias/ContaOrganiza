@@ -6,7 +6,7 @@ import 'Telas/Inicio.dart';
 import 'Telas/Login.dart'; // Importe a tela de login
 
 void main() {
-  //WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
