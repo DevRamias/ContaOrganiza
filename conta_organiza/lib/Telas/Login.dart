@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class Login extends StatelessWidget {
+class Login extends StatefulWidget {
+  @override
+  _LoginState createState() => _LoginState();
+}
+
+class _LoginState extends State<Login> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _senhaController = TextEditingController();
+
+  Future<void> _login() async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _senhaController.text,
+      );
+      print("Usuário logado: ${userCredential.user}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login realizado com sucesso!")),
+      );
+      Navigator.pushNamed(context, '/lista-contas');
+    } catch (e) {
+      print("Erro ao logar: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao logar: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,6 +83,7 @@ class Login extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _emailController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -76,6 +106,7 @@ class Login extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextFormField(
+                controller: _senhaController,
                 obscureText: true,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
@@ -97,9 +128,7 @@ class Login extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   minimumSize: const Size(260, 70),
                 ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/lista-contas');
-                },
+                onPressed: _login,
                 child: const Text(
                   "Entrar",
                   style: TextStyle(
