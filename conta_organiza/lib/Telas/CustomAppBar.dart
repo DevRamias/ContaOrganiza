@@ -38,10 +38,14 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void didUpdateWidget(covariant CustomAppBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userProfileImage != widget.userProfileImage) {
-      _userProfileImage = widget.userProfileImage;
+      setState(() {
+        _userProfileImage = widget.userProfileImage;
+      });
     }
     if (oldWidget.userName != widget.userName) {
-      _userName = widget.userName;
+      setState(() {
+        _userName = widget.userName;
+      });
     }
   }
 
