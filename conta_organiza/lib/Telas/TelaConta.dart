@@ -36,6 +36,7 @@ class _TelaContaState extends State<TelaConta> {
         userProfileImage: _userProfileImage,
         title: 'Conta',
         onUpdateProfileImage: (String) {},
+        onUpdateUserName: (String) {},
       ),
       body: Stack(
         children: [

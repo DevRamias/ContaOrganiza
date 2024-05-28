@@ -1,14 +1,18 @@
-import 'package:conta_organiza/Telas/CadastrarUsuario.dart';
-import 'package:conta_organiza/Telas/Inicio.dart';
-import 'package:conta_organiza/Telas/ListaContas.dart';
-import 'package:conta_organiza/Telas/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'Telas/CadastrarUsuario.dart';
+import 'Telas/Inicio.dart';
+import 'Telas/ListaContas.dart';
+import 'Telas/Login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+  );
   runApp(MyApp());
 }
 

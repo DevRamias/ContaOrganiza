@@ -6,12 +6,14 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String userProfileImage;
   final String title;
   final Function(String) onUpdateProfileImage;
+  final Function(String) onUpdateUserName;
 
   CustomAppBar({
     required this.userName,
     required this.userProfileImage,
     required this.title,
     required this.onUpdateProfileImage,
+    required this.onUpdateUserName,
   });
 
   @override
@@ -32,21 +34,28 @@ class _CustomAppBarState extends State<CustomAppBar> {
     _userName = widget.userName;
   }
 
-  void updateProfileImage(String newImage) {
-    setState(() {
-      _userProfileImage = newImage;
-    });
-    widget.onUpdateProfileImage(newImage);
-  }
-
-  void updateUserName(String newName) {
-    setState(() {
-      _userName = newName;
-    });
+  @override
+  void didUpdateWidget(covariant CustomAppBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userProfileImage != widget.userProfileImage) {
+      _userProfileImage = widget.userProfileImage;
+    }
+    if (oldWidget.userName != widget.userName) {
+      _userName = widget.userName;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider<Object>? imageProvider;
+    if (_userProfileImage.startsWith('assets/')) {
+      imageProvider = AssetImage(_userProfileImage);
+    } else if (_userProfileImage.startsWith('http')) {
+      imageProvider = NetworkImage(_userProfileImage);
+    } else {
+      imageProvider = FileImage(File(_userProfileImage));
+    }
+
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: const Color(0xff838DFF),
@@ -57,9 +66,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: _userProfileImage.startsWith('assets/')
-                    ? AssetImage(_userProfileImage) as ImageProvider
-                    : FileImage(File(_userProfileImage)),
+                backgroundImage: imageProvider,
               ),
               const SizedBox(width: 10),
               Text(

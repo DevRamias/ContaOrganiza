@@ -1,4 +1,3 @@
-import 'package:conta_organiza/Telas/CustomAppBar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -6,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'CustomAppBar.dart';
 
 class TelaPerfil extends StatefulWidget {
   final Function(String, String) onUpdateProfile;
@@ -44,7 +44,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
           _nameController.text = _userName;
         });
       } else {
-        // Documento não existe, usar valores padrão
         setState(() {
           _userName = 'Nome do Usuário';
           _userProfileImage = 'assets/images/Foto do perfil.png';
@@ -192,6 +191,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
         onUpdateProfileImage: (newImage) {
           setState(() {
             _userProfileImage = newImage;
+          });
+        },
+        onUpdateUserName: (newName) {
+          setState(() {
+            _userName = newName;
           });
         },
       ),

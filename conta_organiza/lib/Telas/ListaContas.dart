@@ -30,6 +30,11 @@ class _ListaContasState extends State<ListaContas> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await initializeFirestoreData();
     _loadAllFiles();
     _loadProfile();
   }
@@ -56,6 +61,8 @@ class _ListaContasState extends State<ListaContas> {
             // Se ocorrer um erro ao analisar a data, ignore este arquivo
             print('Erro ao analisar data no arquivo: $fileName');
           }
+        } else {
+          print('Nome do arquivo não está no formato esperado: $fileName');
         }
       }
     }
@@ -74,11 +81,18 @@ class _ListaContasState extends State<ListaContas> {
             .collection('users')
             .doc(user.uid)
             .get();
-        setState(() {
-          _userName = userDoc['name'] ?? 'Nome do Usuário';
-          _userProfileImage =
-              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
-        });
+
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>?;
+
+          if (userData != null) {
+            setState(() {
+              _userName = userData['name'] ?? 'Nome do Usuário';
+              _userProfileImage = userData['profileImageUrl'] ??
+                  'assets/images/Foto do perfil.png';
+            });
+          }
+        }
       } else {
         final prefs = await SharedPreferences.getInstance();
         setState(() {
@@ -102,6 +116,24 @@ class _ListaContasState extends State<ListaContas> {
           rethrow;
         }
         await Future.delayed(Duration(seconds: 2 * retryCount));
+      }
+    }
+  }
+
+  Future<void> initializeFirestoreData() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      DocumentReference userDocRef =
+          FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      DocumentSnapshot userDoc = await userDocRef.get();
+
+      if (!userDoc.exists) {
+        await userDocRef.set({
+          'name': 'Nome do Usuário',
+          'profileImageUrl': 'assets/images/Foto do perfil.png',
+        });
       }
     }
   }
@@ -145,6 +177,11 @@ class _ListaContasState extends State<ListaContas> {
         onUpdateProfileImage: (String newImageUrl) {
           setState(() {
             _userProfileImage = newImageUrl;
+          });
+        },
+        onUpdateUserName: (String newName) {
+          setState(() {
+            _userName = newName;
           });
         },
       ),
