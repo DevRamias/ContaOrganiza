@@ -23,11 +23,13 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 
 class _CustomAppBarState extends State<CustomAppBar> {
   late String _userProfileImage;
+  late String _userName;
 
   @override
   void initState() {
     super.initState();
     _userProfileImage = widget.userProfileImage;
+    _userName = widget.userName;
   }
 
   void updateProfileImage(String newImage) {
@@ -35,6 +37,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
       _userProfileImage = newImage;
     });
     widget.onUpdateProfileImage(newImage);
+  }
+
+  void updateUserName(String newName) {
+    setState(() {
+      _userName = newName;
+    });
   }
 
   @override
@@ -51,11 +59,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 radius: 20,
                 backgroundImage: _userProfileImage.startsWith('assets/')
                     ? AssetImage(_userProfileImage) as ImageProvider
-                    : NetworkImage(_userProfileImage),
+                    : FileImage(File(_userProfileImage)),
               ),
               const SizedBox(width: 10),
               Text(
-                widget.userName,
+                _userName,
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,

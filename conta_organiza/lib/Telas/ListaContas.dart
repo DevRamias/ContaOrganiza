@@ -1,18 +1,20 @@
 import 'dart:async';
+import 'package:conta_organiza/Telas/CustomAppBar.dart';
+import 'package:conta_organiza/Telas/TelaInicialPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'TelaInicialPage.dart';
-import 'Diretorios.dart';
-import 'Pesquisar.dart';
-import 'Configuracoes.dart';
+import 'diretorios.dart';
+import 'pesquisar.dart';
+import 'configuracoes.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
-import 'CustomAppBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ListaContas extends StatefulWidget {
+  const ListaContas({super.key});
+
   @override
   _ListaContasState createState() => _ListaContasState();
 }
@@ -140,7 +142,11 @@ class _ListaContasState extends State<ListaContas> {
         userName: _userName,
         userProfileImage: _userProfileImage,
         title: _titles[_selectedIndex],
-        onUpdateProfileImage: (String) {},
+        onUpdateProfileImage: (String newImageUrl) {
+          setState(() {
+            _userProfileImage = newImageUrl;
+          });
+        },
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:conta_organiza/Telas/CustomAppBar.dart'; // Certifique-se de ajustar o caminho conforme necessário
 
 class TelaConta extends StatefulWidget {
+  const TelaConta({super.key});
+
   @override
   _TelaContaState createState() => _TelaContaState();
 }

@@ -5,6 +5,8 @@ import 'dart:io';
 import 'InfoConta.dart';
 
 class Diretorios extends StatefulWidget {
+  const Diretorios({super.key});
+
   @override
   _DiretoriosState createState() => _DiretoriosState();
 }

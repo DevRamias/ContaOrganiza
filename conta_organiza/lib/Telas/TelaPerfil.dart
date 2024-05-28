@@ -36,12 +36,21 @@ class _TelaPerfilState extends State<TelaPerfil> {
           .collection('users')
           .doc(_currentUser!.uid)
           .get();
-      setState(() {
-        _userName = userDoc['name'] ?? 'Nome do Usuário';
-        _userProfileImage =
-            userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
-        _nameController.text = _userName;
-      });
+      if (userDoc.exists) {
+        setState(() {
+          _userName = userDoc['name'] ?? 'Nome do Usuário';
+          _userProfileImage =
+              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+          _nameController.text = _userName;
+        });
+      } else {
+        // Documento não existe, usar valores padrão
+        setState(() {
+          _userName = 'Nome do Usuário';
+          _userProfileImage = 'assets/images/Foto do perfil.png';
+          _nameController.text = _userName;
+        });
+      }
     } else {
       final prefs = await SharedPreferences.getInstance();
       setState(() {

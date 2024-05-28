@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class TelaInicial extends StatelessWidget {
+  const TelaInicial({super.key});
+
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;

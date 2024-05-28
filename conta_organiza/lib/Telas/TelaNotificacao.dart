@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:conta_organiza/Telas/CustomAppBar.dart'; // Certifique-se de ajustar o caminho conforme necessário
 
 class TelaNotificacao extends StatefulWidget {
+  const TelaNotificacao({super.key});
+
   @override
   _TelaNotificacaoState createState() => _TelaNotificacaoState();
 }

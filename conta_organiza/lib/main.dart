@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+// import 'package:firebase_app_check/firebase_app_check.dart';
 import 'Telas/CadastrarUsuario.dart';
 import 'Telas/ConfirmarEmail.dart';
 import 'Telas/ListaContas.dart';
@@ -8,7 +9,12 @@ import 'Telas/Login.dart'; // Importe a tela de login
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+    // await FirebaseAppCheck.instance.activate();
+  } catch (e) {
+    print('Erro ao inicializar o Firebase: $e');
+  }
   runApp(MyApp());
 }
 

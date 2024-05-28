@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CadastrarUsuario extends StatefulWidget {
+  const CadastrarUsuario({super.key});
+
   @override
   _CadastrarUsuarioState createState() => _CadastrarUsuarioState();
 }
