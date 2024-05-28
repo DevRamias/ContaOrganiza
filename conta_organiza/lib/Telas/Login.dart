@@ -23,7 +23,7 @@ class _LoginState extends State<Login> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login realizado com sucesso!")),
       );
-      Navigator.pushNamed(context, '/lista-contas');
+      Navigator.pushReplacementNamed(context, '/lista-contas');
     } catch (e) {
       print("Erro ao logar: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,7 +36,7 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Remove a seta de voltar
+        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xff838DFF),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(15),

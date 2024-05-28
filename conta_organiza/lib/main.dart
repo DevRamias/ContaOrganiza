@@ -1,20 +1,14 @@
-import 'package:firebase_core/firebase_core.dart';
+import 'package:conta_organiza/Telas/CadastrarUsuario.dart';
+import 'package:conta_organiza/Telas/Inicio.dart';
+import 'package:conta_organiza/Telas/ListaContas.dart';
+import 'package:conta_organiza/Telas/Login.dart';
 import 'package:flutter/material.dart';
-// import 'package:firebase_app_check/firebase_app_check.dart';
-import 'Telas/CadastrarUsuario.dart';
-import 'Telas/ConfirmarEmail.dart';
-import 'Telas/ListaContas.dart';
-import 'Telas/Inicio.dart';
-import 'Telas/Login.dart'; // Importe a tela de login
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-    // await FirebaseAppCheck.instance.activate();
-  } catch (e) {
-    print('Erro ao inicializar o Firebase: $e');
-  }
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -25,16 +19,32 @@ class MyApp extends StatelessWidget {
       title: 'Conta Organiza',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        primaryColor: const Color(0xFF2196f3),
-        canvasColor: const Color(0xFFfafafa),
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => TelaInicial(),
+        '/': (context) => AuthWrapper(),
+        '/inicio': (context) => TelaInicial(),
+        '/login': (context) => Login(),
         '/cadastrar': (context) => CadastrarUsuario(),
-        '/confirmar-email': (context) => ConfirmarEmail(),
         '/lista-contas': (context) => ListaContas(),
-        '/login': (context) => Login(), // Adiciona a rota da tela de login
+      },
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasData) {
+          return ListaContas();
+        }
+        return TelaInicial();
       },
     );
   }
