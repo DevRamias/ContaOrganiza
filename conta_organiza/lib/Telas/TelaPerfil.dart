@@ -185,8 +185,8 @@ class _TelaPerfilState extends State<TelaPerfil> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        userName: _userName,
-        userProfileImage: _userProfileImage,
+        // userName: _userName,
+        // userProfileImage: _userProfileImage,
         title: 'Perfil',
         onUpdateProfileImage: (newImage) {
           setState(() {

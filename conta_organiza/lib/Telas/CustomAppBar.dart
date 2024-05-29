@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final String userName;
-  final String userProfileImage;
   final String title;
   final Function(String) onUpdateProfileImage;
   final Function(String) onUpdateUserName;
 
   CustomAppBar({
-    required this.userName,
-    required this.userProfileImage,
     required this.title,
     required this.onUpdateProfileImage,
     required this.onUpdateUserName,
@@ -26,26 +24,30 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _CustomAppBarState extends State<CustomAppBar> {
   late String _userProfileImage;
   late String _userName;
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    _userProfileImage = widget.userProfileImage;
-    _userName = widget.userName;
+    _userProfileImage = 'assets/images/Foto do perfil.png'; // Valor padrão
+    _userName = 'Nome do Usuário'; // Valor padrão
+    _loadUserProfile();
   }
 
-  @override
-  void didUpdateWidget(covariant CustomAppBar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.userProfileImage != widget.userProfileImage) {
-      setState(() {
-        _userProfileImage = widget.userProfileImage;
-      });
-    }
-    if (oldWidget.userName != widget.userName) {
-      setState(() {
-        _userName = widget.userName;
-      });
+  Future<void> _loadUserProfile() async {
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
+      if (userDoc.exists) {
+        setState(() {
+          _userName = userDoc['name'] ?? 'Nome do Usuário';
+          _userProfileImage =
+              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+        });
+      }
     }
   }
 
