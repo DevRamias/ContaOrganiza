@@ -30,6 +30,12 @@ class _InfoContaState extends State<InfoConta> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Qualquer lógica que dependa do contexto pode ser movida para cá
+  }
+
   Future<void> _loadFiles() async {
     if (_currentUser != null) {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
