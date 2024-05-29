@@ -1,3 +1,4 @@
+import 'package:conta_organiza/Telas/ConfirmarEmail.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -22,11 +23,20 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
         email: _emailController.text,
         password: _senhaController.text,
       );
-      print("Usuário cadastrado: ${userCredential.user}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cadastro realizado com sucesso!")),
-      );
-      Navigator.pushNamed(context, '/confirmar-email');
+
+      User? user = userCredential.user;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  "Cadastro realizado com sucesso! Verifique seu e-mail.")),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ConfirmarEmail()),
+        );
+      }
     } catch (e) {
       print("Erro ao cadastrar: $e");
       ScaffoldMessenger.of(context).showSnackBar(

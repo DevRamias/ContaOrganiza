@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ConfirmarEmail extends StatelessWidget {
   const ConfirmarEmail({super.key});
+
+  Future<void> _checkEmailVerified(BuildContext context) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    await user?.reload();
+    if (user != null && user.emailVerified) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('E-mail ainda não verificado.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,11 +89,9 @@ class ConfirmarEmail extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   minimumSize: const Size(240, 75),
                 ),
-                onPressed: () {
-                  // Função a ser executada quando o botão for pressionado
-                },
+                onPressed: () => _checkEmailVerified(context),
                 child: const Text(
-                  "Enviar Código",
+                  "Verificar E-mail",
                   style: TextStyle(
                     color: Color(0xffffffff),
                     fontSize: 20,
