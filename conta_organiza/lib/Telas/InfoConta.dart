@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'dart:io';
 
 class InfoConta extends StatefulWidget {
-  final Directory directory;
+  final DocumentSnapshot directory;
 
   InfoConta({required this.directory});
 
@@ -16,44 +19,44 @@ class InfoConta extends StatefulWidget {
 
 class _InfoContaState extends State<InfoConta> {
   List<Map<String, dynamic>> _files = [];
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
     initializeDateFormatting('pt_BR', null).then((_) {
       _loadFiles();
     });
   }
 
   Future<void> _loadFiles() async {
-    if (!widget.directory.existsSync()) {
-      await widget.directory.create(recursive: true);
+    if (_currentUser != null) {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(widget.directory.id)
+          .collection('files')
+          .get();
+
+      List<Map<String, dynamic>> files = querySnapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'description': doc['description'],
+          'date': doc['date'].toDate(),
+          'type': doc['type'],
+          'url': doc['url'],
+        };
+      }).toList();
+
+      files.sort((a, b) =>
+          b['date'].compareTo(a['date'])); // Ordena os arquivos pela data
+
+      setState(() {
+        _files = files;
+      });
     }
-
-    final List<FileSystemEntity> entities = widget.directory.listSync();
-    List<Map<String, dynamic>> files = [];
-
-    for (var entity in entities) {
-      if (entity is File) {
-        final fileName = entity.path.split('/').last;
-        final parts = fileName.split('_');
-        if (parts.length == 3) {
-          files.add({
-            'file': entity,
-            'description': parts[0],
-            'date': DateFormat('yyyy-MM-dd').parse(parts[1]),
-            'type': parts[2],
-          });
-        }
-      }
-    }
-
-    files.sort((a, b) =>
-        b['date'].compareTo(a['date'])); // Ordena os arquivos pela data
-
-    setState(() {
-      _files = files;
-    });
   }
 
   Future<void> _pickFiles() async {
@@ -137,15 +140,26 @@ class _InfoContaState extends State<InfoConta> {
                   description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
               final fileName =
                   '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
-              final newFilePath = '${widget.directory.path}/$fileName';
 
-              // Certifique-se de que o diretório de destino exista
-              if (!widget.directory.existsSync()) {
-                await widget.directory.create(recursive: true);
-              }
+              // Upload do arquivo para o Firebase Storage
+              final storageRef = FirebaseStorage.instance.ref().child(
+                  'users/${_currentUser!.uid}/directories/${widget.directory.id}/$fileName');
+              await storageRef.putFile(file);
+              final fileUrl = await storageRef.getDownloadURL();
 
-              // Copie o arquivo para o novo local
-              await file.copy(newFilePath);
+              // Salvar metadados no Firestore
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(_currentUser!.uid)
+                  .collection('directories')
+                  .doc(widget.directory.id)
+                  .collection('files')
+                  .add({
+                'description': sanitizedDescription,
+                'date': date,
+                'type': file.path.split('.').last,
+                'url': fileUrl,
+              });
 
               // Carregue os arquivos novamente para atualizar a lista
               await _loadFiles();
@@ -159,9 +173,24 @@ class _InfoContaState extends State<InfoConta> {
     );
   }
 
-  Future<void> _deleteFile(File file) async {
-    await file.delete();
-    _loadFiles();
+  Future<void> _deleteFile(Map<String, dynamic> fileData) async {
+    if (_currentUser != null) {
+      // Deletar o arquivo do Firebase Storage
+      final storageRef = FirebaseStorage.instance.refFromURL(fileData['url']);
+      await storageRef.delete();
+
+      // Deletar metadados do Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(widget.directory.id)
+          .collection('files')
+          .doc(fileData['id'])
+          .delete();
+
+      _loadFiles();
+    }
   }
 
   @override
@@ -169,7 +198,6 @@ class _InfoContaState extends State<InfoConta> {
     Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
 
     for (var fileData in _files) {
-      final file = fileData['file'];
       final description = fileData['description'];
       final date = fileData['date'];
       final type = fileData['type'];
@@ -190,7 +218,7 @@ class _InfoContaState extends State<InfoConta> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.directory.path.split('/').last),
+        title: Text(widget.directory['name']),
         actions: [
           IconButton(
             icon: Icon(Icons.add_a_photo),
@@ -225,10 +253,10 @@ class _InfoContaState extends State<InfoConta> {
                 ),
                 title: Text(month, style: TextStyle(fontSize: 18)),
                 children: files.map((fileData) {
-                  final file = fileData['file'];
                   final description = fileData['description'];
                   final date = fileData['date'];
                   final type = fileData['type'];
+                  final url = fileData['url'];
 
                   IconData iconData;
                   if (type == 'pdf') {
@@ -244,10 +272,11 @@ class _InfoContaState extends State<InfoConta> {
                         'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
-                      onPressed: () => _deleteFile(file),
+                      onPressed: () => _deleteFile(fileData),
                     ),
                     onTap: () {
                       // Ação ao clicar no arquivo
+                      // Você pode abrir o arquivo usando um visualizador de PDF ou imagem
                     },
                   );
                 }).toList(),

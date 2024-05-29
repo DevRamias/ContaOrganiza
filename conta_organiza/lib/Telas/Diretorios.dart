@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
-import 'dart:io';
 import 'InfoConta.dart';
 
 class Diretorios extends StatefulWidget {
@@ -12,53 +13,62 @@ class Diretorios extends StatefulWidget {
 }
 
 class _DiretoriosState extends State<Diretorios> {
-  List<Directory> _directories = [];
+  List<DocumentSnapshot> _directories = [];
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
     _loadDirectories();
   }
 
   Future<void> _createDirectory(String name) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final newDirectory = Directory('${directory.path}/$name');
-    if (!(await newDirectory.exists())) {
-      await newDirectory.create(recursive: true);
+    if (_currentUser != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .add({'name': name});
       await _loadDirectories();
     }
   }
 
-  Future<void> _renameDirectory(Directory dir, String newName) async {
-    final newPath = '${dir.parent.path}/$newName';
-    final newDirectory = Directory(newPath);
-    if (!(await newDirectory.exists())) {
-      await dir.rename(newPath);
+  Future<void> _renameDirectory(DocumentSnapshot dir, String newName) async {
+    if (_currentUser != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(dir.id)
+          .update({'name': newName});
       await _loadDirectories();
     }
   }
 
-  Future<void> _deleteDirectory(Directory dir) async {
-    if (await dir.exists()) {
-      await dir.delete(recursive: true);
+  Future<void> _deleteDirectory(DocumentSnapshot dir) async {
+    if (_currentUser != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(dir.id)
+          .delete();
       await _loadDirectories();
     }
   }
 
   Future<void> _loadDirectories() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final List<FileSystemEntity> entities = directory.listSync();
-
-    List<Directory> directories = [];
-    for (var entity in entities) {
-      if (entity is Directory) {
-        directories.add(entity);
-      }
+    if (_currentUser != null) {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .get();
+      setState(() {
+        _directories = querySnapshot.docs;
+      });
     }
-
-    setState(() {
-      _directories = directories;
-    });
   }
 
   Future<void> _showCreateDirectoryDialog() async {
@@ -94,7 +104,7 @@ class _DiretoriosState extends State<Diretorios> {
     );
   }
 
-  Future<void> _showRenameDirectoryDialog(Directory dir) async {
+  Future<void> _showRenameDirectoryDialog(DocumentSnapshot dir) async {
     String newName = '';
     await showDialog(
       context: context,
@@ -127,13 +137,13 @@ class _DiretoriosState extends State<Diretorios> {
     );
   }
 
-  Future<void> _showDeleteDirectoryDialog(Directory dir) async {
+  Future<void> _showDeleteDirectoryDialog(DocumentSnapshot dir) async {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Excluir diretório'),
         content: Text(
-            'Você tem certeza que deseja excluir o diretório ${dir.path.split('/').last}?'),
+            'Você tem certeza que deseja excluir o diretório ${dir['name']}?'),
         actions: [
           TextButton(
             onPressed: () {
@@ -158,7 +168,7 @@ class _DiretoriosState extends State<Diretorios> {
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
-      final Directory item = _directories.removeAt(oldIndex);
+      final DocumentSnapshot item = _directories.removeAt(oldIndex);
       _directories.insert(newIndex, item);
     });
   }
@@ -182,9 +192,9 @@ class _DiretoriosState extends State<Diretorios> {
               height: 80,
             );
           }
-          Directory dir = _directories[index];
+          DocumentSnapshot dir = _directories[index];
           return GestureDetector(
-            key: ValueKey(dir.path),
+            key: ValueKey(dir.id),
             onTap: () {
               Navigator.push(
                 context,
@@ -230,7 +240,7 @@ class _DiretoriosState extends State<Diretorios> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          dir.path.split('/').last,
+                          dir['name'],
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.black,
