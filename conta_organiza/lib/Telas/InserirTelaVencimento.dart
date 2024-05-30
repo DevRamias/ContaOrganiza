@@ -1,20 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:conta_organiza/Telas/CustomAppBar.dart';
-import 'dart:io';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class InserirTelaVencimento extends StatefulWidget {
   @override
-  _InserirDataVencimentoState createState() => _InserirDataVencimentoState();
+  _InserirTelaVencimentoState createState() => _InserirTelaVencimentoState();
 }
 
-class _InserirDataVencimentoState extends State<InserirTelaVencimento> {
+class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   List<Map<String, dynamic>> _contas = [];
+  List<String> _diretorios = [];
+  String? _selectedDiretorio;
 
-  void _adicionarConta(String descricao, DateTime data) {
+  @override
+  void initState() {
+    super.initState();
+    _loadDiretorios();
+  }
+
+  Future<void> _loadDiretorios() async {
+    QuerySnapshot snapshot =
+        await FirebaseFirestore.instance.collection('diretorios').get();
+    List<String> diretorios =
+        snapshot.docs.map((doc) => doc['nome'].toString()).toList();
     setState(() {
-      _contas.add({'descricao': descricao, 'data': data});
+      _diretorios = diretorios;
+    });
+  }
+
+  void _adicionarConta(String descricao, String diretorio, DateTime data) {
+    setState(() {
+      _contas
+          .add({'descricao': descricao, 'diretorio': diretorio, 'data': data});
     });
   }
 
@@ -27,30 +45,62 @@ class _InserirDataVencimentoState extends State<InserirTelaVencimento> {
   void _mostrarDialogoAdicionarConta() {
     String descricao = '';
     DateTime data = DateTime.now();
+    String? diretorioSelecionado;
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Adicionar Conta'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Descrição'),
-                onChanged: (value) {
-                  descricao = value;
-                },
-              ),
-              SizedBox(height: 10),
-              TextField(
-                decoration: InputDecoration(labelText: 'Data (yyyy-mm-dd)'),
-                keyboardType: TextInputType.datetime,
-                onChanged: (value) {
-                  data = DateTime.parse(value);
-                },
-              ),
-            ],
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: InputDecoration(labelText: 'Conta'),
+                    onChanged: (value) {
+                      descricao = value;
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    decoration: InputDecoration(labelText: 'Diretório'),
+                    items: _diretorios.map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (newValue) {
+                      setState(() {
+                        diretorioSelecionado = newValue;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    decoration: InputDecoration(labelText: 'Data'),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          data = pickedDate;
+                        });
+                      }
+                    },
+                    controller: TextEditingController(
+                        text: DateFormat('yyyy-MM-dd').format(data)),
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             TextButton(
@@ -62,8 +112,10 @@ class _InserirDataVencimentoState extends State<InserirTelaVencimento> {
             TextButton(
               child: Text('Adicionar'),
               onPressed: () {
-                _adicionarConta(descricao, data);
-                Navigator.of(context).pop();
+                if (descricao.isNotEmpty && diretorioSelecionado != null) {
+                  _adicionarConta(descricao, diretorioSelecionado!, data);
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],
@@ -116,8 +168,8 @@ class _InserirDataVencimentoState extends State<InserirTelaVencimento> {
                 final conta = _contas[index];
                 return ListTile(
                   title: Text(conta['descricao']),
-                  subtitle:
-                      Text(DateFormat('yyyy-MM-dd').format(conta['data'])),
+                  subtitle: Text(
+                      '${conta['diretorio']} - ${DateFormat('yyyy-MM-dd').format(conta['data'])}'),
                   trailing: IconButton(
                     icon: Icon(Icons.delete),
                     onPressed: () {
