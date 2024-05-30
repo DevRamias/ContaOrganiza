@@ -1,6 +1,7 @@
-import 'package:conta_organiza/Telas/ConfirmarEmail.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:conta_organiza/Telas/Login.dart';
 
 class CadastrarUsuario extends StatefulWidget {
   const CadastrarUsuario({super.key});
@@ -11,6 +12,7 @@ class CadastrarUsuario extends StatefulWidget {
 
 class _CadastrarUsuarioState extends State<CadastrarUsuario> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nomeUsuarioController = TextEditingController();
@@ -32,15 +34,49 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
               content: Text(
                   "Cadastro realizado com sucesso! Verifique seu e-mail.")),
         );
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ConfirmarEmail()),
+          MaterialPageRoute(builder: (context) => Login()),
         );
       }
     } catch (e) {
       print("Erro ao cadastrar: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erro ao cadastrar: $e")),
+      );
+    }
+  }
+
+  Future<void> _cadastrarComGoogle() async {
+    try {
+      await _googleSignIn.signOut(); // Força o logout do Google Sign-In
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser!.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      User? user = userCredential.user;
+      if (user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Cadastro com Google realizado com sucesso!")),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Login()),
+        );
+      }
+    } catch (e) {
+      print("Erro ao cadastrar com Google: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao cadastrar com Google: $e")),
       );
     }
   }
@@ -225,6 +261,37 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   style: TextStyle(
                     color: Color(0xffffffff),
                     fontSize: 14,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Center(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  side: const BorderSide(
+                    width: 4.0,
+                    color: Color(0xff000D63),
+                  ),
+                  backgroundColor: const Color(0xff5E6DDB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20), // Ajusta o padding horizontal
+                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                ),
+                icon: Image.asset(
+                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
+                  height: 24,
+                ),
+                onPressed: _cadastrarComGoogle,
+                label: const Text(
+                  "Cadastrar com Google",
+                  style: TextStyle(
+                    color: Color(0xffffffff),
+                    fontSize: 20,
                     fontFamily: 'Inter',
                   ),
                 ),

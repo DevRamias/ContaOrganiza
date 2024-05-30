@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:conta_organiza/Telas/ListaContas.dart';
 
 class Login extends StatefulWidget {
-  const Login({super.key});
-
   @override
-  _LoginState createState() => _LoginState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginState extends State<Login> {
+class _LoginScreenState extends State<Login> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
 
@@ -19,15 +20,49 @@ class _LoginState extends State<Login> {
         email: _emailController.text,
         password: _senhaController.text,
       );
-      print("Usuário logado: ${userCredential.user}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login realizado com sucesso!")),
-      );
-      Navigator.pushReplacementNamed(context, '/lista-contas');
+
+      User? user = userCredential.user;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ListaContas()),
+        );
+      }
     } catch (e) {
-      print("Erro ao logar: $e");
+      print("Erro ao fazer login: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao logar: $e")),
+        SnackBar(content: Text("Erro ao fazer login: $e")),
+      );
+    }
+  }
+
+  Future<void> _loginComGoogle() async {
+    try {
+      await _googleSignIn.signOut(); // Força o logout do Google Sign-In
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser!.authentication;
+
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      User? user = userCredential.user;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ListaContas()),
+        );
+      }
+    } catch (e) {
+      print("Erro ao fazer login com Google: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao fazer login com Google: $e")),
       );
     }
   }
@@ -68,9 +103,8 @@ class _LoginState extends State<Login> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
             const Text(
-              'E-mail ou usuário',
+              'E-mail',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -91,7 +125,7 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 12),
             const Text(
               'Senha',
               style: TextStyle(
@@ -109,36 +143,10 @@ class _LoginState extends State<Login> {
               ),
               child: TextFormField(
                 controller: _senhaController,
-                obscureText: true,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
-              ),
-            ),
-            const SizedBox(height: 50),
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  side: const BorderSide(
-                    width: 4.0,
-                    color: Color(0xff000D63),
-                  ),
-                  backgroundColor: const Color(0xff5E6DDB),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  minimumSize: const Size(260, 70),
-                ),
-                onPressed: _login,
-                child: const Text(
-                  "Entrar",
-                  style: TextStyle(
-                    color: Color(0xffffffff),
-                    fontSize: 20,
-                    fontFamily: 'Inter',
-                  ),
-                ),
+                obscureText: true,
               ),
             ),
             const SizedBox(height: 30),
@@ -151,37 +159,50 @@ class _LoginState extends State<Login> {
                   ),
                   backgroundColor: const Color(0xff5E6DDB),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  minimumSize: const Size(140, 40),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20), // Ajusta o padding horizontal
+                  minimumSize: const Size(240, 55), // Largura e altura mínimas
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: _login,
                 child: const Text(
-                  "Cancelar",
+                  "Login",
                   style: TextStyle(
                     color: Color(0xffffffff),
-                    fontSize: 14,
+                    fontSize: 20,
                     fontFamily: 'Inter',
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 15),
             Center(
-              child: GestureDetector(
-                onTap: () {
-                  // Adicione a lógica para a recuperação de senha aqui
-                },
-                child: const Text(
-                  'Esqueci minha senha',
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  side: const BorderSide(
+                    width: 4.0,
+                    color: Color(0xff000D63),
+                  ),
+                  backgroundColor: const Color(0xff5E6DDB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20), // Ajusta o padding horizontal
+                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                ),
+                icon: Image.asset(
+                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
+                  height: 24,
+                ),
+                onPressed: _loginComGoogle,
+                label: const Text(
+                  "Login com Google",
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.red,
-                    decoration: TextDecoration.underline,
+                    color: Color(0xffffffff),
+                    fontSize: 20,
+                    fontFamily: 'Inter',
                   ),
                 ),
               ),

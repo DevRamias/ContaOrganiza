@@ -42,10 +42,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
           .doc(_currentUser!.uid)
           .get();
       if (userDoc.exists) {
+        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
         setState(() {
-          _userName = userDoc['name'] ?? 'Nome do Usuário';
+          _userName = data?['name'] ?? 'Nome do Usuário';
           _userProfileImage =
-              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+              data?['profileImage'] ?? 'assets/images/Foto do perfil.png';
         });
       }
     }

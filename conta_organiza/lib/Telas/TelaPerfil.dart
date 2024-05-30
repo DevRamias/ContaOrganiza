@@ -37,10 +37,11 @@ class _TelaPerfilState extends State<TelaPerfil> {
           .doc(_currentUser!.uid)
           .get();
       if (userDoc.exists) {
+        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
         setState(() {
-          _userName = userDoc['name'] ?? 'Nome do Usuário';
+          _userName = data?['name'] ?? 'Nome do Usuário';
           _userProfileImage =
-              userDoc['profileImage'] ?? 'assets/images/Foto do perfil.png';
+              data?['profileImage'] ?? 'assets/images/Foto do perfil.png';
           _nameController.text = _userName;
         });
       } else {
@@ -185,8 +186,6 @@ class _TelaPerfilState extends State<TelaPerfil> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        // userName: _userName,
-        // userProfileImage: _userProfileImage,
         title: 'Perfil',
         onUpdateProfileImage: (newImage) {
           setState(() {

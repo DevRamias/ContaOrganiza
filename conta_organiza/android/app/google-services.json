@@ -12,7 +12,12 @@
           "package_name": "ContaOrganiza.conta_organiza"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "981191159690-o17o1r8do4i82vq727a4ctncrvvnt3dt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCm3PXbdtJOAPjHFYRGNnCgUhq8KCM8nwg"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "981191159690-o17o1r8do4i82vq727a4ctncrvvnt3dt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
