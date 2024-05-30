@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'CustomAppBar.dart';
+import 'ListaContas.dart'; // Importar a tela ListaContas
 
 class TelaPerfil extends StatefulWidget {
   final Function(String, String) onUpdateProfile;
@@ -197,6 +198,8 @@ class _TelaPerfilState extends State<TelaPerfil> {
             _userName = newName;
           });
         },
+        userName: _userName,
+        userProfileImage: _userProfileImage,
       ),
       body: Stack(
         children: [
@@ -206,7 +209,13 @@ class _TelaPerfilState extends State<TelaPerfil> {
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pop();
+                    // Substituir a tela atual pela ListaContas
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ListaContas(),
+                      ),
+                    );
                   },
                   child: Container(
                     padding:

@@ -171,8 +171,8 @@ class _ListaContasState extends State<ListaContas> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        // userName: _userName,
-        // userProfileImage: _userProfileImage,
+        userName: _userName,
+        userProfileImage: _userProfileImage,
         title: _titles[_selectedIndex],
         onUpdateProfileImage: (String newImageUrl) {
           setState(() {

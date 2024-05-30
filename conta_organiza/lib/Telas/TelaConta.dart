@@ -32,8 +32,8 @@ class _TelaContaState extends State<TelaConta> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        // userName: _userName,
-        // userProfileImage: _userProfileImage,
+        userName: _userName,
+        userProfileImage: _userProfileImage,
         title: 'Conta',
         onUpdateProfileImage: (String) {},
         onUpdateUserName: (String) {},

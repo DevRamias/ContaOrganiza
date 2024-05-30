@@ -12,6 +12,8 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.title,
     required this.onUpdateProfileImage,
     required this.onUpdateUserName,
+    required String userName,
+    required String userProfileImage,
   });
 
   @override
