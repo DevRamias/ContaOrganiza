@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'InfoConta.dart';
@@ -38,24 +37,64 @@ class _DiretoriosState extends State<Diretorios> {
 
   Future<void> _createDirectory(String name) async {
     if (_currentUser != null) {
-      await FirebaseFirestore.instance
+      // Remover espaços em branco no final do nome
+      name = name.trim();
+
+      // Verificar se já existe um diretório com o mesmo nome
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(_currentUser!.uid)
           .collection('directories')
-          .add({'name': name});
-      await _loadDirectories();
+          .where('name', isEqualTo: name)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('directories')
+            .add({'name': name});
+        await _loadDirectories();
+      } else {
+        // Mostrar uma mensagem de erro se o diretório já existir
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Já existe um diretório com esse nome.'),
+          ),
+        );
+      }
     }
   }
 
   Future<void> _renameDirectory(DocumentSnapshot dir, String newName) async {
     if (_currentUser != null) {
-      await FirebaseFirestore.instance
+      // Remover espaços em branco no final do nome
+      newName = newName.trim();
+
+      // Verificar se já existe um diretório com o novo nome
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(_currentUser!.uid)
           .collection('directories')
-          .doc(dir.id)
-          .update({'name': newName});
-      await _loadDirectories();
+          .where('name', isEqualTo: newName)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('directories')
+            .doc(dir.id)
+            .update({'name': newName});
+        await _loadDirectories();
+      } else {
+        // Mostrar uma mensagem de erro se o diretório já existir
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Já existe um diretório com esse nome.'),
+          ),
+        );
+      }
     }
   }
 
@@ -90,11 +129,18 @@ class _DiretoriosState extends State<Diretorios> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Criar novo diretório'),
-        content: TextField(
-          onChanged: (value) {
-            dirName = value;
-          },
-          decoration: InputDecoration(hintText: "Nome do diretório"),
+        content: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: TextField(
+              onChanged: (value) {
+                dirName = value;
+              },
+              decoration: InputDecoration(hintText: "Nome do diretório"),
+              maxLength: 20, // Limitar a 20 caracteres
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -123,11 +169,18 @@ class _DiretoriosState extends State<Diretorios> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Renomear diretório'),
-        content: TextField(
-          onChanged: (value) {
-            newName = value;
-          },
-          decoration: InputDecoration(hintText: "Novo nome do diretório"),
+        content: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: TextField(
+              onChanged: (value) {
+                newName = value;
+              },
+              decoration: InputDecoration(hintText: "Novo nome do diretório"),
+              maxLength: 20, // Limitar a 20 caracteres
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -259,6 +312,8 @@ class _DiretoriosState extends State<Diretorios> {
                             color: Colors.black,
                             fontFamily: 'Inter',
                           ),
+                          overflow: TextOverflow
+                              .ellipsis, // Adicionado para limitar o texto
                         ),
                       ],
                     ),
