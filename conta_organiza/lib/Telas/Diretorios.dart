@@ -10,6 +10,19 @@ class Diretorios extends StatefulWidget {
 
   @override
   _DiretoriosState createState() => _DiretoriosState();
+
+  static Future<List<String>> getDirectories() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('directories')
+          .get();
+      return querySnapshot.docs.map((doc) => doc['name'] as String).toList();
+    }
+    return [];
+  }
 }
 
 class _DiretoriosState extends State<Diretorios> {

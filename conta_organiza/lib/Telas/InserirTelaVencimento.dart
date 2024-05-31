@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'Diretorios.dart'; // Importar o arquivo Diretorios.dart
 
 class InserirTelaVencimento extends StatefulWidget {
   const InserirTelaVencimento({super.key});
@@ -11,14 +12,23 @@ class InserirTelaVencimento extends StatefulWidget {
 
 class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   List<Map<String, dynamic>> _contas = [];
+  List<String> _diretorios = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDirectories();
+  }
+
+  Future<void> _loadDirectories() async {
+    List<String> directories = await Diretorios.getDirectories();
+    setState(() {
+      _diretorios = directories;
+    });
+  }
 
   void _mostrarDialogoAdicionarConta() {
     final _descricaoController = TextEditingController();
-    final List<String> _diretorios = [
-      'Diretório 1',
-      'Diretório 2',
-      'Diretório 3'
-    ];
     String? _diretorioSelecionado;
     DateTime? _dataSelecionada;
 
