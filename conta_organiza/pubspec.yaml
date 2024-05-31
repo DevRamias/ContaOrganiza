@@ -25,6 +25,8 @@ dependencies:
   google_sign_in: ^5.4.2
   flutter_localizations: # Adicione esta linha
     sdk: flutter
+  flutter_pdfview: ^1.0.4
+  dio: ^4.0.6
 
 dev_dependencies:
   flutter_test:

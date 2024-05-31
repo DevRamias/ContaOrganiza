@@ -8,7 +8,9 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:dio/dio.dart';
 
 class InfoConta extends StatefulWidget {
   final DocumentSnapshot directory;
@@ -230,11 +232,139 @@ class _InfoContaState extends State<InfoConta> {
     }
   }
 
-  Future<void> _previewOrDownloadFile(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<File> _downloadFileToDownloads(String url) async {
+    final directory = await getExternalStorageDirectory();
+    final downloadsDirectory = Directory('/storage/emulated/0/Download');
+    if (!await downloadsDirectory.exists()) {
+      await downloadsDirectory.create(recursive: true);
+    }
+    final filePath = '${downloadsDirectory.path}/${url.split('/').last}';
+    final file = File(filePath);
+
+    final response = await Dio().get(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    await file.writeAsBytes(response.data);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Arquivo salvo em: ${file.path}')),
+    );
+    return file;
+  }
+
+  void _editFileDetails(Map<String, dynamic> fileData) {
+    String description = fileData['description'];
+    DateTime date = fileData['date'];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Editar Detalhes do Arquivo'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  description = value;
+                },
+                controller: TextEditingController(text: description),
+                decoration: InputDecoration(labelText: 'Descrição'),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text('Vencimento: '),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: date,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          locale: const Locale('pt', 'BR'),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            date = pickedDate;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.access_time),
+                          SizedBox(width: 5),
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(date),
+                            style:
+                                TextStyle(decoration: TextDecoration.underline),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(_currentUser!.uid)
+                  .collection('directories')
+                  .doc(widget.directory.id)
+                  .collection('files')
+                  .doc(fileData['id'])
+                  .update({
+                'description': description,
+                'date': date,
+              });
+              await _loadFiles();
+            },
+            child: Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPreview(Map<String, dynamic> fileData) {
+    if (fileData['type'] == 'pdf') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PDFViewer(fileUrl: fileData['url']),
+        ),
+      );
     } else {
-      throw 'Could not launch $url';
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Image.network(fileData['url']),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Fechar'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -310,8 +440,10 @@ class _InfoContaState extends State<InfoConta> {
                         IconData iconData;
                         if (type == 'pdf') {
                           iconData = Icons.picture_as_pdf;
-                        } else {
+                        } else if (['jpg', 'jpeg', 'png'].contains(type)) {
                           iconData = Icons.image;
+                        } else {
+                          iconData = Icons.insert_drive_file;
                         }
 
                         return ListTile(
@@ -319,22 +451,46 @@ class _InfoContaState extends State<InfoConta> {
                           title: Text(description),
                           subtitle: Text(
                               'Vencimento: ${DateFormat('dd/MM/yyyy').format(date)}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.preview),
-                                onPressed: () => _previewOrDownloadFile(url),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete),
-                                onPressed: () => _deleteFile(fileData),
-                              ),
-                            ],
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              switch (value) {
+                                case 'preview':
+                                  _showPreview(fileData);
+                                  break;
+                                case 'download':
+                                  await _downloadFileToDownloads(url);
+                                  break;
+                                case 'edit':
+                                  _editFileDetails(fileData);
+                                  break;
+                                case 'delete':
+                                  _deleteFile(fileData);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                PopupMenuItem(
+                                  value: 'preview',
+                                  child: Text('Visualizar'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'download',
+                                  child: Text('Download'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Editar'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Excluir'),
+                                ),
+                              ];
+                            },
                           ),
                           onTap: () {
-                            // Ação ao clicar no arquivo
-                            // Você pode abrir o arquivo usando um visualizador de PDF ou imagem
+                            _showPreview(fileData);
                           },
                         );
                       }).toList(),
@@ -344,5 +500,53 @@ class _InfoContaState extends State<InfoConta> {
               }).toList(),
             ),
     );
+  }
+}
+
+class PDFViewer extends StatelessWidget {
+  final String fileUrl;
+
+  PDFViewer({required this.fileUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Visualizar PDF'),
+      ),
+      body: FutureBuilder<File>(
+        future: _downloadPdf(fileUrl),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            if (snapshot.hasError) {
+              return Center(child: Text('Erro ao carregar PDF'));
+            }
+            return PDFView(
+              filePath: snapshot.data!.path,
+            );
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
+
+  Future<File> _downloadPdf(String url) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/${url.split('/').last}';
+    final file = File(filePath);
+
+    if (await file.exists()) {
+      return file;
+    }
+
+    final response = await Dio().get(
+      url,
+      options: Options(responseType: ResponseType.bytes),
+    );
+
+    await file.writeAsBytes(response.data);
+    return file;
   }
 }
