@@ -1,29 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Pesquisar extends StatefulWidget {
-  final List<Map<String, dynamic>> files;
-
-  Pesquisar({required this.files});
-
   @override
   _PesquisarState createState() => _PesquisarState();
 }
 
 class _PesquisarState extends State<Pesquisar> {
+  List<Map<String, dynamic>> _files = [];
   List<Map<String, dynamic>> _filteredFiles = [];
   String _searchQuery = '';
   DateTime? _selectedDate;
+  User? _currentUser;
 
   @override
   void initState() {
     super.initState();
-    _filteredFiles = widget.files;
+    _loadFiles();
+  }
+
+  Future<void> _loadFiles() async {
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      QuerySnapshot directoriesSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .get();
+
+      List<Map<String, dynamic>> files = [];
+      for (var directory in directoriesSnapshot.docs) {
+        QuerySnapshot filesSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('directories')
+            .doc(directory.id)
+            .collection('files')
+            .get();
+
+        files.addAll(filesSnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            'description': doc['description'],
+            'date': doc['date'].toDate(),
+            'type': doc['type'],
+            'url': doc['url'],
+            'directoryId': directory.id,
+            'directoryName': directory['name'],
+          };
+        }).toList());
+      }
+
+      setState(() {
+        _files = files;
+        _filteredFiles = _files;
+      });
+    }
   }
 
   void _filterFiles() {
-    List<Map<String, dynamic>> filtered = widget.files.where((file) {
+    List<Map<String, dynamic>> filtered = _files.where((file) {
       bool matchesQuery = file['description']
           .toLowerCase()
           .contains(_searchQuery.toLowerCase());
@@ -54,12 +92,18 @@ class _PesquisarState extends State<Pesquisar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Pesquisar Arquivos'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
-              decoration: InputDecoration(labelText: 'Nome do Arquivo'),
+              decoration: InputDecoration(
+                labelText: 'Nome do Arquivo',
+                border: OutlineInputBorder(),
+              ),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -74,11 +118,25 @@ class _PesquisarState extends State<Pesquisar> {
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _selectDate(context),
-                    child: Text(
-                      _selectedDate != null
-                          ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
-                          : 'Selecionar Data',
-                      style: TextStyle(decoration: TextDecoration.underline),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey,
+                            width: 1.0,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        _selectedDate != null
+                            ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+                            : 'Selecionar Data',
+                        style: TextStyle(
+                          decoration: TextDecoration.underline,
+                          color: Colors.blue,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -100,10 +158,10 @@ class _PesquisarState extends State<Pesquisar> {
                 itemCount: _filteredFiles.length,
                 itemBuilder: (context, index) {
                   final fileData = _filteredFiles[index];
-                  final file = fileData['file'];
                   final description = fileData['description'];
                   final date = fileData['date'];
                   final type = fileData['type'];
+                  final directoryName = fileData['directoryName'];
 
                   IconData iconData;
                   if (type == 'pdf') {
@@ -116,7 +174,7 @@ class _PesquisarState extends State<Pesquisar> {
                     leading: Icon(iconData),
                     title: Text(description),
                     subtitle: Text(
-                        'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
+                        'Diretório: $directoryName\nVencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
                     onTap: () {
                       // Ação ao clicar no arquivo
                     },

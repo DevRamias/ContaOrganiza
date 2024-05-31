@@ -158,7 +158,7 @@ class _ListaContasState extends State<ListaContas> {
       Diretorios(),
       _isLoading
           ? Center(child: CircularProgressIndicator())
-          : Pesquisar(files: _files),
+          : Pesquisar(/*files: _files*/),
       Configuracoes(onUpdateProfile: _updateProfile),
     ];
 
