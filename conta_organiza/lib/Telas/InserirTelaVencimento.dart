@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Diretorios.dart'; // Importar o arquivo Diretorios.dart
 import 'CustomAppBar.dart'; // Importar o arquivo CustomAppBar.dart
 
@@ -17,6 +17,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   List<String> _diretorios = [];
   String _userName = 'Nome do Usuário';
   String _userProfileImage = 'assets/images/Foto do perfil.png';
+  User? _currentUser;
 
   @override
   void initState() {
@@ -34,28 +35,63 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   }
 
   Future<void> _loadContas() async {
-    final prefs = await SharedPreferences.getInstance();
-    final contasString = prefs.getString('contas');
-    if (contasString != null) {
-      setState(() {
-        _contas = List<Map<String, dynamic>>.from((contasString as List)
-            .map((item) => Map<String, dynamic>.from(item)));
-      });
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
+      if (userDoc.exists) {
+        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+        if (data != null && data.containsKey('contas')) {
+          setState(() {
+            _contas =
+                List<Map<String, dynamic>>.from(data['contas'].map((conta) {
+              return {
+                'descricao': conta['descricao'],
+                'diretorio': conta['diretorio'],
+                'data': (conta['data'] as Timestamp).toDate(),
+              };
+            }));
+          });
+        }
+      }
     }
   }
 
   Future<void> _saveContas() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('contas', _contas.toString());
+    if (_currentUser != null) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .update({
+        'contas': _contas.map((conta) {
+          return {
+            'descricao': conta['descricao'],
+            'diretorio': conta['diretorio'],
+            'data': Timestamp.fromDate(conta['data']),
+          };
+        }).toList(),
+      });
+    }
   }
 
   Future<void> _loadUserProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
-      _userProfileImage = prefs.getString('userProfileImage') ??
-          'assets/images/Foto do perfil.png';
-    });
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .get();
+      if (userDoc.exists) {
+        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+        setState(() {
+          _userName = data?['name'] ?? 'Nome do Usuário';
+          _userProfileImage =
+              data?['profileImage'] ?? 'assets/images/Foto do perfil.png';
+        });
+      }
+    }
   }
 
   void _mostrarDialogoAdicionarConta() {
