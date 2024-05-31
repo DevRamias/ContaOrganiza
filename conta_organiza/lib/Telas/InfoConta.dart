@@ -10,7 +10,6 @@ import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:dio/dio.dart';
 
 class InfoConta extends StatefulWidget {
@@ -328,32 +327,23 @@ class _InfoContaState extends State<InfoConta> {
     );
   }
 
-  void _showPreview(Map<String, dynamic> fileData) {
-    if (fileData['type'] == 'pdf') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PDFViewer(fileUrl: fileData['url']),
-        ),
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: Image.network(fileData['url']),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Fechar'),
-              ),
-            ],
-          );
-        },
-      );
-    }
+  void _showImagePreview(String url) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: Image.network(url),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -428,8 +418,12 @@ class _InfoContaState extends State<InfoConta> {
                         IconData iconData;
                         if (type == 'pdf') {
                           iconData = Icons.picture_as_pdf;
-                        } else {
+                        } else if (type == 'jpg' ||
+                            type == 'jpeg' ||
+                            type == 'png') {
                           iconData = Icons.image;
+                        } else {
+                          iconData = Icons.insert_drive_file;
                         }
 
                         return ListTile(
@@ -440,8 +434,12 @@ class _InfoContaState extends State<InfoConta> {
                           trailing: PopupMenuButton<String>(
                             onSelected: (value) async {
                               switch (value) {
-                                case 'preview':
-                                  _showPreview(fileData);
+                                case 'view':
+                                  if (type == 'pdf') {
+                                    await _openFileInBrowser(url);
+                                  } else {
+                                    _showImagePreview(url);
+                                  }
                                   break;
                                 case 'download':
                                   await _openFileInBrowser(url);
@@ -457,7 +455,7 @@ class _InfoContaState extends State<InfoConta> {
                             itemBuilder: (BuildContext context) {
                               return [
                                 PopupMenuItem(
-                                  value: 'preview',
+                                  value: 'view',
                                   child: Text('Visualizar'),
                                 ),
                                 PopupMenuItem(
@@ -476,7 +474,11 @@ class _InfoContaState extends State<InfoConta> {
                             },
                           ),
                           onTap: () {
-                            _showPreview(fileData);
+                            if (type == 'pdf') {
+                              _openFileInBrowser(url);
+                            } else {
+                              _showImagePreview(url);
+                            }
                           },
                         );
                       }).toList(),
@@ -486,53 +488,5 @@ class _InfoContaState extends State<InfoConta> {
               }).toList(),
             ),
     );
-  }
-}
-
-class PDFViewer extends StatelessWidget {
-  final String fileUrl;
-
-  PDFViewer({required this.fileUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Visualizar PDF'),
-      ),
-      body: FutureBuilder<File>(
-        future: _downloadPdf(fileUrl),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Erro ao carregar PDF'));
-            }
-            return PDFView(
-              filePath: snapshot.data!.path,
-            );
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-    );
-  }
-
-  Future<File> _downloadPdf(String url) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/${url.split('/').last}';
-    final file = File(filePath);
-
-    if (await file.exists()) {
-      return file;
-    }
-
-    final response = await Dio().get(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
-
-    await file.writeAsBytes(response.data);
-    return file;
   }
 }
