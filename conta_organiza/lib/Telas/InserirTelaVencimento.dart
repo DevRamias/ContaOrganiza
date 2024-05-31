@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'Diretorios.dart'; // Importar o arquivo Diretorios.dart
+import 'CustomAppBar.dart'; // Importar o arquivo CustomAppBar.dart
 
 class InserirTelaVencimento extends StatefulWidget {
   const InserirTelaVencimento({super.key});
@@ -13,17 +15,46 @@ class InserirTelaVencimento extends StatefulWidget {
 class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   List<Map<String, dynamic>> _contas = [];
   List<String> _diretorios = [];
+  String _userName = 'Nome do Usuário';
+  String _userProfileImage = 'assets/images/Foto do perfil.png';
 
   @override
   void initState() {
     super.initState();
     _loadDirectories();
+    _loadContas();
+    _loadUserProfile();
   }
 
   Future<void> _loadDirectories() async {
     List<String> directories = await Diretorios.getDirectories();
     setState(() {
       _diretorios = directories;
+    });
+  }
+
+  Future<void> _loadContas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final contasString = prefs.getString('contas');
+    if (contasString != null) {
+      setState(() {
+        _contas = List<Map<String, dynamic>>.from((contasString as List)
+            .map((item) => Map<String, dynamic>.from(item)));
+      });
+    }
+  }
+
+  Future<void> _saveContas() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('contas', _contas.toString());
+  }
+
+  Future<void> _loadUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? 'Nome do Usuário';
+      _userProfileImage = prefs.getString('userProfileImage') ??
+          'assets/images/Foto do perfil.png';
     });
   }
 
@@ -111,6 +142,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                       'diretorio': _diretorioSelecionado!,
                       'data': _dataSelecionada!,
                     });
+                    _saveContas();
                   });
                   Navigator.of(context).pop();
                 }
@@ -126,6 +158,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   void _removerConta(int index) {
     setState(() {
       _contas.removeAt(index);
+      _saveContas();
     });
   }
 
@@ -133,166 +166,75 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        userName: 'Nome do Usuário',
-        userProfileImage: 'assets/images/Foto do perfil.png',
+        userName: _userName,
+        userProfileImage: _userProfileImage,
         title: 'Vencimento',
         onUpdateProfileImage: (String newImageUrl) {},
         onUpdateUserName: (String newName) {},
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                FloatingActionButton(
-                  onPressed: _mostrarDialogoAdicionarConta,
-                  child: Icon(Icons.add),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Contas adicionais',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _contas.length,
-              itemBuilder: (context, index) {
-                final conta = _contas[index];
-                return ListTile(
-                  title: Text(conta['descricao']),
-                  subtitle: Text(
-                      '${conta['diretorio']} - ${DateFormat('yyyy-MM-dd').format(conta['data'])}'),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () {
-                      _removerConta(index);
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final String userName;
-  final String userProfileImage;
-  final String title;
-  final Function(String) onUpdateProfileImage;
-  final Function(String) onUpdateUserName;
-
-  CustomAppBar({
-    required this.userName,
-    required this.userProfileImage,
-    required this.title,
-    required this.onUpdateProfileImage,
-    required this.onUpdateUserName,
-  });
-
-  @override
-  _CustomAppBarState createState() => _CustomAppBarState();
-
-  @override
-  Size get preferredSize => Size.fromHeight(100);
-}
-
-class _CustomAppBarState extends State<CustomAppBar> {
-  late String _userProfileImage;
-  late String _userName;
-
-  @override
-  void initState() {
-    super.initState();
-    _userProfileImage = widget.userProfileImage;
-    _userName = widget.userName;
-  }
-
-  void updateProfileImage(String newImage) {
-    setState(() {
-      _userProfileImage = newImage;
-    });
-    widget.onUpdateProfileImage(newImage);
-  }
-
-  void updateUserName(String newName) {
-    setState(() {
-      _userName = newName;
-    });
-    widget.onUpdateUserName(newName);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: const Color(0xff838DFF),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+          ListView(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: _userProfileImage.startsWith('assets/')
-                    ? AssetImage(_userProfileImage) as ImageProvider
-                    : FileImage(File(_userProfileImage)),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                _userName,
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontFamily: 'Inter',
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    margin: EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color:
+                          Color(0xffD2D6FF), // Cor de fundo ao redor do botão
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.arrow_back, color: Colors.black),
+                        SizedBox(width: 5),
+                        Text(
+                          'Voltar',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: 'Inter',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
+              ListTile(
+                title: Text(
+                  'Adicionar Conta',
+                  style: TextStyle(fontFamily: 'Inter'),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: _mostrarDialogoAdicionarConta,
+                ),
+              ),
+              if (_contas.isNotEmpty)
+                ..._contas.map((conta) {
+                  return ListTile(
+                    title: Text(conta['descricao']),
+                    subtitle: Text(
+                        '${conta['diretorio']} - ${DateFormat('yyyy-MM-dd').format(conta['data'])}'),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () {
+                        _removerConta(_contas.indexOf(conta));
+                      },
+                    ),
+                  );
+                }).toList(),
             ],
           ),
-          Image.asset(
-            'assets/images/Vector.png',
-            height: 30,
-          ),
         ],
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(55),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                widget.title,
-                style: const TextStyle(
-                  fontSize: 30,
-                  color: Colors.white,
-                  fontFamily: 'Inter',
-                ),
-              ),
-            ),
-            Container(
-              height: 2,
-              color: Colors.black,
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-            ),
-          ],
-        ),
       ),
     );
   }
