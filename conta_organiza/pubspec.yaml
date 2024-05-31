@@ -27,6 +27,8 @@ dependencies:
     sdk: flutter
   flutter_pdfview: ^1.0.4
   dio: ^4.0.6
+  open_file: ^3.2.1
+  permission_handler: ^10.0.0
 
 dev_dependencies:
   flutter_test:

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:dio/dio.dart';
@@ -232,25 +233,12 @@ class _InfoContaState extends State<InfoConta> {
     }
   }
 
-  Future<File> _downloadFileToDownloads(String url) async {
-    final directory = await getExternalStorageDirectory();
-    final downloadsDirectory = Directory('/storage/emulated/0/Download');
-    if (!await downloadsDirectory.exists()) {
-      await downloadsDirectory.create(recursive: true);
+  Future<void> _openFileInBrowser(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
     }
-    final filePath = '${downloadsDirectory.path}/${url.split('/').last}';
-    final file = File(filePath);
-
-    final response = await Dio().get(
-      url,
-      options: Options(responseType: ResponseType.bytes),
-    );
-
-    await file.writeAsBytes(response.data);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Arquivo salvo em: ${file.path}')),
-    );
-    return file;
   }
 
   void _editFileDetails(Map<String, dynamic> fileData) {
@@ -440,10 +428,8 @@ class _InfoContaState extends State<InfoConta> {
                         IconData iconData;
                         if (type == 'pdf') {
                           iconData = Icons.picture_as_pdf;
-                        } else if (['jpg', 'jpeg', 'png'].contains(type)) {
-                          iconData = Icons.image;
                         } else {
-                          iconData = Icons.insert_drive_file;
+                          iconData = Icons.image;
                         }
 
                         return ListTile(
@@ -458,7 +444,7 @@ class _InfoContaState extends State<InfoConta> {
                                   _showPreview(fileData);
                                   break;
                                 case 'download':
-                                  await _downloadFileToDownloads(url);
+                                  await _openFileInBrowser(url);
                                   break;
                                 case 'edit':
                                   _editFileDetails(fileData);
