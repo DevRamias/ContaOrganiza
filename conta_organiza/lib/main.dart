@@ -6,6 +6,9 @@ import 'Telas/CadastrarUsuario.dart';
 import 'Telas/Inicio.dart';
 import 'Telas/ListaContas.dart';
 import 'Telas/Login.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +16,10 @@ void main() async {
   await FirebaseAppCheck.instance.activate(
     androidProvider: AndroidProvider.debug,
   );
+
+  // Inicializar a formatação de data para português
+  await initializeDateFormatting('pt_BR', null);
+
   runApp(MyApp());
 }
 
@@ -24,6 +31,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en', 'US'), // English
+        const Locale('pt', 'BR'), // Portuguese
+      ],
       initialRoute: '/',
       routes: {
         '/': (context) => AuthWrapper(),

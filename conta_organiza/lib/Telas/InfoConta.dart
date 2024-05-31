@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:io';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class InfoConta extends StatefulWidget {
   final DocumentSnapshot directory;
@@ -94,43 +96,53 @@ class _InfoContaState extends State<InfoConta> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Informações do arquivo'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              onChanged: (value) {
-                description = value;
-              },
-              decoration: InputDecoration(labelText: 'Descrição'),
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Text('Vencimento: '),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          date = pickedDate;
-                        });
-                      }
-                    },
-                    child: Text(
-                      DateFormat('yyyy-MM-dd').format(date),
-                      style: TextStyle(decoration: TextDecoration.underline),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  description = value;
+                },
+                decoration: InputDecoration(labelText: 'Descrição'),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text('Vencimento: '),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: date,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          locale: const Locale('pt', 'BR'),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            date = pickedDate;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.access_time),
+                          SizedBox(width: 5),
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(date),
+                            style:
+                                TextStyle(decoration: TextDecoration.underline),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -218,6 +230,14 @@ class _InfoContaState extends State<InfoConta> {
     }
   }
 
+  Future<void> _previewOrDownloadFile(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
@@ -298,10 +318,19 @@ class _InfoContaState extends State<InfoConta> {
                           leading: Icon(iconData),
                           title: Text(description),
                           subtitle: Text(
-                              'Vencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete),
-                            onPressed: () => _deleteFile(fileData),
+                              'Vencimento: ${DateFormat('dd/MM/yyyy').format(date)}'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(Icons.preview),
+                                onPressed: () => _previewOrDownloadFile(url),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () => _deleteFile(fileData),
+                              ),
+                            ],
                           ),
                           onTap: () {
                             // Ação ao clicar no arquivo
