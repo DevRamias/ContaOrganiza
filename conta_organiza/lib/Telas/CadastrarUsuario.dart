@@ -115,7 +115,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 15),
+            const SizedBox(height: 5),
             const Text(
               'E-mail',
               style: TextStyle(
