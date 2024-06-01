@@ -153,24 +153,6 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
                   border: Border(bottom: BorderSide(color: Colors.black)),
                 ),
               ),
-              ListTile(
-                title: Text(
-                  'Inserir a data de vencimento',
-                  style: TextStyle(fontFamily: 'Inter'),
-                ),
-                trailing: IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: _pickDueDate,
-                ),
-              ),
-              if (_dueDate != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'Data de vencimento: ${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}',
-                    style: TextStyle(fontSize: 16, fontFamily: 'Inter'),
-                  ),
-                ),
             ],
           ),
         ],
