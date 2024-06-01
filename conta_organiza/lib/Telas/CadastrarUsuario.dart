@@ -13,9 +13,7 @@ class CadastrarUsuario extends StatefulWidget {
 class _CadastrarUsuarioState extends State<CadastrarUsuario> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final TextEditingController _nomeController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _nomeUsuarioController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
 
   Future<void> _cadastrar() async {
@@ -117,29 +115,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Nome completo',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black,
-                fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xff838DFF), width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextFormField(
-                controller: _nomeController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 15),
             const Text(
               'E-mail',
               style: TextStyle(
@@ -157,29 +133,6 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
               ),
               child: TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Nome usuário',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black,
-                fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xff838DFF), width: 2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextFormField(
-                controller: _nomeUsuarioController,
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
@@ -223,7 +176,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   ),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                  minimumSize: const Size(290, 65), // Largura e altura mínimas
                 ),
                 onPressed: _cadastrar,
                 child: const Text(
@@ -236,7 +189,38 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                 ),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 40),
+            Center(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  side: const BorderSide(
+                    width: 4.0,
+                    color: Color(0xff5E6DDB),
+                  ),
+                  backgroundColor: Color.fromARGB(255, 255, 255, 255),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20), // Ajusta o padding horizontal
+                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                ),
+                icon: Image.asset(
+                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
+                  height: 24,
+                ),
+                onPressed: _cadastrarComGoogle,
+                label: const Text(
+                  "Cadastrar com Google",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    fontSize: 20,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 50),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -261,37 +245,6 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   style: TextStyle(
                     color: Color(0xffffffff),
                     fontSize: 14,
-                    fontFamily: 'Inter',
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-            Center(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  side: const BorderSide(
-                    width: 4.0,
-                    color: Color(0xff000D63),
-                  ),
-                  backgroundColor: const Color(0xff5E6DDB),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 55), // Largura e altura mínimas
-                ),
-                icon: Image.asset(
-                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
-                  height: 24,
-                ),
-                onPressed: _cadastrarComGoogle,
-                label: const Text(
-                  "Cadastrar com Google",
-                  style: TextStyle(
-                    color: Color(0xffffffff),
-                    fontSize: 20,
                     fontFamily: 'Inter',
                   ),
                 ),
