@@ -1,7 +1,14 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Pesquisar extends StatefulWidget {
   @override
@@ -89,6 +96,230 @@ class _PesquisarState extends State<Pesquisar> {
     }
   }
 
+  Future<void> _showPdfPreview(String url) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: FutureBuilder<File>(
+            future: _downloadPdf(url),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Não foi possível exibir o PDF. Por favor, tente novamente mais tarde.',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                try {
+                  return PDFView(filePath: snapshot.data!.path);
+                } catch (e) {
+                  return Center(
+                    child: Text(
+                      'Erro ao carregar o PDF. Por favor, tente novamente mais tarde.',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+              } else {
+                return Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<File> _downloadPdf(String url) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/${url.split('/').last}';
+      final file = File(filePath);
+
+      if (await file.exists()) {
+        return file;
+      }
+
+      final response = await Dio().get(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      await file.writeAsBytes(response.data);
+      return file;
+    } catch (e) {
+      throw Exception('Erro ao baixar o PDF: $e');
+    }
+  }
+
+  void _showImagePreview(String url) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: FutureBuilder(
+            future: _loadImage(url),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Erro ao carregar a imagem'));
+                }
+                return Image.network(url);
+              } else {
+                return Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _loadImage(String url) async {
+    try {
+      final response = await Dio().get(url);
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao carregar a imagem');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar a imagem: $e');
+    }
+  }
+
+  Future<void> _openFileInBrowser(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  void _editFileDetails(Map<String, dynamic> fileData) {
+    String description = fileData['description'];
+    DateTime date = fileData['date'];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Editar Detalhes do Arquivo'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                onChanged: (value) {
+                  description = value;
+                },
+                controller: TextEditingController(text: description),
+                decoration: InputDecoration(labelText: 'Descrição'),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text('Vencimento: '),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: date,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          locale: const Locale('pt', 'BR'),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            date = pickedDate;
+                          });
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.access_time),
+                          SizedBox(width: 5),
+                          Text(
+                            DateFormat('dd/MM/yyyy').format(date),
+                            style:
+                                TextStyle(decoration: TextDecoration.underline),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(_currentUser!.uid)
+                  .collection('directories')
+                  .doc(fileData['directoryId'])
+                  .collection('files')
+                  .doc(fileData['id'])
+                  .update({
+                'description': description,
+                'date': date,
+              });
+              await _loadFiles();
+            },
+            child: Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteFile(Map<String, dynamic> fileData) async {
+    if (_currentUser != null) {
+      // Deletar o arquivo do Firebase Storage
+      final storageRef = FirebaseStorage.instance.refFromURL(fileData['url']);
+      await storageRef.delete();
+
+      // Deletar metadados do Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(fileData['directoryId'])
+          .collection('files')
+          .doc(fileData['id'])
+          .delete();
+
+      _loadFiles();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,9 +403,48 @@ class _PesquisarState extends State<Pesquisar> {
                     title: Text(description),
                     subtitle: Text(
                         'Diretório: $directoryName\nVencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
-                    onTap: () {
-                      // Ação ao clicar no arquivo
-                    },
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) async {
+                        switch (value) {
+                          case 'view':
+                            if (type == 'pdf') {
+                              _showPdfPreview(fileData['url']);
+                            } else {
+                              _showImagePreview(fileData['url']);
+                            }
+                            break;
+                          case 'download':
+                            await _openFileInBrowser(fileData['url']);
+                            break;
+                          case 'edit':
+                            _editFileDetails(fileData);
+                            break;
+                          case 'delete':
+                            _deleteFile(fileData);
+                            break;
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return [
+                          PopupMenuItem(
+                            value: 'view',
+                            child: Text('Visualizar'),
+                          ),
+                          PopupMenuItem(
+                            value: 'download',
+                            child: Text('Download'),
+                          ),
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Editar'),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Excluir'),
+                          ),
+                        ];
+                      },
+                    ),
                   );
                 },
               ),
