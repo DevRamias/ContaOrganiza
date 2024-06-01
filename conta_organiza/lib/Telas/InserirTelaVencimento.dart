@@ -102,90 +102,113 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Adicionar Conta'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _descricaoController,
-                  decoration: InputDecoration(labelText: 'Descrição'),
-                ),
-                SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: 'Diretório'),
-                  value: _diretorioSelecionado,
-                  items: _diretorios.map((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _diretorioSelecionado = newValue;
-                    });
-                  },
-                ),
-                SizedBox(height: 20),
-                Row(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Adicionar Conta'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Text(
-                        _dataSelecionada == null
-                            ? 'Nenhuma data selecionada'
-                            : DateFormat('yyyy-MM-dd')
-                                .format(_dataSelecionada!),
-                      ),
+                    TextField(
+                      controller: _descricaoController,
+                      decoration: InputDecoration(labelText: 'Descrição'),
                     ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime(2101),
+                    SizedBox(height: 20),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(labelText: 'Diretório'),
+                      value: _diretorioSelecionado,
+                      items: _diretorios.map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
                         );
-                        if (pickedDate != null) {
-                          setState(() {
-                            _dataSelecionada = pickedDate;
-                          });
-                        }
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          _diretorioSelecionado = newValue;
+                        });
                       },
-                      child: Text('Selecionar Data'),
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _dataSelecionada == null
+                                ? 'Selecione data'
+                                : DateFormat('dd/MM/yyyy')
+                                    .format(_dataSelecionada!),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                            );
+                            if (pickedDate != null) {
+                              setState(() {
+                                _dataSelecionada = pickedDate;
+                              });
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today, size: 16),
+                              SizedBox(width: 5),
+                              Text(
+                                'Vencimento',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_descricaoController.text.isNotEmpty &&
+                        _diretorioSelecionado != null &&
+                        _dataSelecionada != null) {
+                      setState(() {
+                        _contas.add({
+                          'descricao': _descricaoController.text,
+                          'diretorio': _diretorioSelecionado!,
+                          'data': _dataSelecionada!,
+                        });
+                        _saveContas();
+                      });
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text('Adicionar'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_descricaoController.text.isNotEmpty &&
-                    _diretorioSelecionado != null &&
-                    _dataSelecionada != null) {
-                  setState(() {
-                    _contas.add({
-                      'descricao': _descricaoController.text,
-                      'diretorio': _diretorioSelecionado!,
-                      'data': _dataSelecionada!,
-                    });
-                    _saveContas();
-                  });
-                  Navigator.of(context).pop();
-                }
-              },
-              child: Text('Adicionar'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -249,8 +272,15 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   'Contas adicionadas',
                   style: TextStyle(fontFamily: 'Inter'),
                 ),
-                trailing: IconButton(
-                  icon: Icon(Icons.add),
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: EdgeInsets.all(16),
+                    elevation: 8,
+                  ),
+                  child: Icon(Icons.add),
                   onPressed: _mostrarDialogoAdicionarConta,
                 ),
               ),
@@ -259,7 +289,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - ${DateFormat('yyyy-MM-dd').format(conta['data'])}'),
+                        '${conta['diretorio']} - ${DateFormat('dd/MM/yyyy').format(conta['data'])}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
