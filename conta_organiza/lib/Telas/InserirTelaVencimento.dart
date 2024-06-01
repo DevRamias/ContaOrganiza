@@ -50,7 +50,12 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
-                'data': (conta['data'] as Timestamp).toDate(),
+                'dataInicio': conta['dataInicio'] != null
+                    ? (conta['dataInicio'] as Timestamp).toDate()
+                    : null,
+                'dataTermino': conta['dataTermino'] != null
+                    ? (conta['dataTermino'] as Timestamp).toDate()
+                    : null,
               };
             }));
           });
@@ -69,7 +74,12 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
           return {
             'descricao': conta['descricao'],
             'diretorio': conta['diretorio'],
-            'data': Timestamp.fromDate(conta['data']),
+            'dataInicio': conta['dataInicio'] != null
+                ? Timestamp.fromDate(conta['dataInicio'])
+                : null,
+            'dataTermino': conta['dataTermino'] != null
+                ? Timestamp.fromDate(conta['dataTermino'])
+                : null,
           };
         }).toList(),
       });
@@ -97,7 +107,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   void _mostrarDialogoAdicionarConta() {
     final _descricaoController = TextEditingController();
     String? _diretorioSelecionado;
-    DateTime? _dataSelecionada;
+    DateTime? _dataInicioSelecionada;
+    DateTime? _dataTerminoSelecionada;
 
     showDialog(
       context: context,
@@ -135,10 +146,10 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                       children: [
                         Expanded(
                           child: Text(
-                            _dataSelecionada == null
-                                ? 'Selecione data'
+                            _dataInicioSelecionada == null
+                                ? 'Selecione data de início'
                                 : DateFormat('dd/MM/yyyy')
-                                    .format(_dataSelecionada!),
+                                    .format(_dataInicioSelecionada!),
                           ),
                         ),
                         ElevatedButton(
@@ -151,7 +162,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             );
                             if (pickedDate != null) {
                               setState(() {
-                                _dataSelecionada = pickedDate;
+                                _dataInicioSelecionada = pickedDate;
                               });
                             }
                           },
@@ -160,7 +171,50 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                               Icon(Icons.calendar_today, size: 16),
                               SizedBox(width: 5),
                               Text(
-                                'Vencimento',
+                                'Início',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _dataTerminoSelecionada == null
+                                ? 'Selecione data de término'
+                                : DateFormat('dd/MM/yyyy')
+                                    .format(_dataTerminoSelecionada!),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                            );
+                            if (pickedDate != null) {
+                              setState(() {
+                                _dataTerminoSelecionada = pickedDate;
+                              });
+                            }
+                          },
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today, size: 16),
+                              SizedBox(width: 5),
+                              Text(
+                                'Término',
                                 style: TextStyle(fontSize: 12),
                               ),
                             ],
@@ -187,12 +241,13 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   onPressed: () {
                     if (_descricaoController.text.isNotEmpty &&
                         _diretorioSelecionado != null &&
-                        _dataSelecionada != null) {
+                        _dataInicioSelecionada != null) {
                       setState(() {
                         _contas.add({
                           'descricao': _descricaoController.text,
                           'diretorio': _diretorioSelecionado!,
-                          'data': _dataSelecionada!,
+                          'dataInicio': _dataInicioSelecionada!,
+                          'dataTermino': _dataTerminoSelecionada,
                         });
                         _saveContas();
                       });
@@ -223,6 +278,18 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
 
   @override
   Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
+      DateTime? dataInicio = conta['dataInicio'];
+      DateTime? dataTermino = conta['dataTermino'];
+      return (dataInicio != null &&
+              (dataInicio.isAfter(now) || dataInicio.isAtSameMomentAs(now))) &&
+          (dataTermino == null || dataTermino.isAfter(now));
+    }).toList();
+
+    contasFiltradas
+        .sort((a, b) => a['dataInicio']?.compareTo(b['dataInicio']) ?? 0);
+
     return Scaffold(
       appBar: CustomAppBar(
         userName: _userName,
@@ -246,8 +313,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                         EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                     margin: EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color:
-                          Color(0xffD2D6FF), // Cor de fundo ao redor do botão
+                      color: Color(0xffD2D6FF),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -274,23 +340,23 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 ),
                 trailing: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff838DFF), // Cor de fundo
+                    backgroundColor: Color(0xff838DFF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.all(14), // Tamanho menor
+                    padding: EdgeInsets.all(14),
                     elevation: 8,
                   ),
-                  child: Icon(Icons.add, color: Colors.black), // Ícone preto
+                  child: Icon(Icons.add, color: Colors.black),
                   onPressed: _mostrarDialogoAdicionarConta,
                 ),
               ),
-              if (_contas.isNotEmpty)
-                ..._contas.map((conta) {
+              if (contasFiltradas.isNotEmpty)
+                ...contasFiltradas.map((conta) {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - ${DateFormat('dd/MM/yyyy').format(conta['data'])}'),
+                        '${conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'}'),
                     trailing: IconButton(
                       icon: Icon(Icons.delete),
                       onPressed: () {
