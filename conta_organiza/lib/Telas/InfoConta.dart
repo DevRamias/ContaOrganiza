@@ -528,8 +528,17 @@ class _InfoContaState extends State<InfoConta> {
                                 case 'view':
                                   if (type == 'pdf') {
                                     _showPdfPreview(url);
-                                  } else {
+                                  } else if (type == 'jpg' ||
+                                      type == 'jpeg' ||
+                                      type == 'png') {
                                     _showImagePreview(url);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Tipo de arquivo não suportado para visualização.'),
+                                      ),
+                                    );
                                   }
                                   break;
                                 case 'download':
@@ -545,11 +554,10 @@ class _InfoContaState extends State<InfoConta> {
                             },
                             itemBuilder: (BuildContext context) {
                               return [
-                                if (type != 'pdf')
-                                  PopupMenuItem(
-                                    value: 'view',
-                                    child: Text('Visualizar'),
-                                  ),
+                                PopupMenuItem(
+                                  value: 'view',
+                                  child: Text('Visualizar'),
+                                ),
                                 PopupMenuItem(
                                   value: 'download',
                                   child: Text('Download'),
@@ -568,8 +576,18 @@ class _InfoContaState extends State<InfoConta> {
                           onTap: () {
                             if (type == 'pdf') {
                               _showPdfPreview(url);
-                            } else {
+                            } else if (type == 'jpg' ||
+                                type == 'jpeg' ||
+                                type == 'png') {
                               _showImagePreview(url);
+                            } else {
+                              _showPdfPreview(url);
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text(
+                              //         'Tipo de arquivo não suportado para visualização.'),
+                              //   ),
+                              // );
                             }
                           },
                         );
