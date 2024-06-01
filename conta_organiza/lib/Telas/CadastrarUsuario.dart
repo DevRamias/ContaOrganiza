@@ -1,7 +1,8 @@
+import 'package:conta_organiza/Telas/Login.dart';
+import 'package:conta_organiza/Telas/VerificaEmail.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:conta_organiza/Telas/Login.dart';
 
 class CadastrarUsuario extends StatefulWidget {
   const CadastrarUsuario({super.key});
@@ -18,6 +19,16 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
 
   Future<void> _cadastrar() async {
     try {
+      // Verifica se o e-mail já está em uso
+      final List<String> signInMethods =
+          await _auth.fetchSignInMethodsForEmail(_emailController.text);
+      if (signInMethods.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("E-mail já está em uso. Tente outro e-mail.")),
+        );
+        return;
+      }
+
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: _emailController.text,
@@ -27,14 +38,11 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
       User? user = userCredential.user;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  "Cadastro realizado com sucesso! Verifique seu e-mail.")),
-        );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Login()),
+          MaterialPageRoute(
+              builder: (context) =>
+                  VerificaEmail(email: _emailController.text)),
         );
       }
     } catch (e) {
@@ -174,9 +182,8 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(290, 65), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(290, 65),
                 ),
                 onPressed: _cadastrar,
                 child: const Text(
@@ -201,12 +208,11 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(290, 55), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(290, 55),
                 ),
                 icon: Image.asset(
-                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
+                  'assets/images/google_logo.png',
                   height: 24,
                 ),
                 onPressed: _cadastrarComGoogle,
@@ -232,10 +238,9 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8), // Ajuste o padding horizontal e vertical
-                  minimumSize: const Size(140, 40), // Largura e altura mínimas
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(140, 40),
                 ),
                 onPressed: () {
                   Navigator.pop(context);
