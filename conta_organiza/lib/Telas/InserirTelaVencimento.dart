@@ -246,7 +246,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
               ),
               ListTile(
                 title: Text(
-                  'Adicionar Conta',
+                  'Contas adicionadas',
                   style: TextStyle(fontFamily: 'Inter'),
                 ),
                 trailing: IconButton(

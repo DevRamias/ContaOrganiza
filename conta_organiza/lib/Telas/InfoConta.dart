@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -332,7 +333,19 @@ class _InfoContaState extends State<InfoConta> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          content: Image.network(url),
+          content: FutureBuilder(
+            future: _loadImage(url),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Erro ao carregar a imagem'));
+                }
+                return Image.network(url);
+              } else {
+                return Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -344,6 +357,84 @@ class _InfoContaState extends State<InfoConta> {
         );
       },
     );
+  }
+
+  Future<void> _loadImage(String url) async {
+    try {
+      final response = await Dio().get(url);
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao carregar a imagem');
+      }
+    } catch (e) {
+      throw Exception('Erro ao carregar a imagem: $e');
+    }
+  }
+
+  void _showPdfPreview(String url) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: FutureBuilder<File>(
+            future: _downloadPdf(url),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      'Não foi possível exibir o PDF. Por favor, tente novamente mais tarde.',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                try {
+                  return PDFView(filePath: snapshot.data!.path);
+                } catch (e) {
+                  return Center(
+                    child: Text(
+                      'Erro ao carregar o PDF. Por favor, tente novamente mais tarde.',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+              } else {
+                return Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<File> _downloadPdf(String url) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/${url.split('/').last}';
+      final file = File(filePath);
+
+      if (await file.exists()) {
+        return file;
+      }
+
+      final response = await Dio().get(
+        url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      await file.writeAsBytes(response.data);
+      return file;
+    } catch (e) {
+      throw Exception('Erro ao baixar o PDF: $e');
+    }
   }
 
   @override
@@ -436,7 +527,7 @@ class _InfoContaState extends State<InfoConta> {
                               switch (value) {
                                 case 'view':
                                   if (type == 'pdf') {
-                                    await _openFileInBrowser(url);
+                                    _showPdfPreview(url);
                                   } else {
                                     _showImagePreview(url);
                                   }
@@ -454,10 +545,11 @@ class _InfoContaState extends State<InfoConta> {
                             },
                             itemBuilder: (BuildContext context) {
                               return [
-                                PopupMenuItem(
-                                  value: 'view',
-                                  child: Text('Visualizar'),
-                                ),
+                                if (type != 'pdf')
+                                  PopupMenuItem(
+                                    value: 'view',
+                                    child: Text('Visualizar'),
+                                  ),
                                 PopupMenuItem(
                                   value: 'download',
                                   child: Text('Download'),
@@ -475,7 +567,7 @@ class _InfoContaState extends State<InfoConta> {
                           ),
                           onTap: () {
                             if (type == 'pdf') {
-                              _openFileInBrowser(url);
+                              _showPdfPreview(url);
                             } else {
                               _showImagePreview(url);
                             }
