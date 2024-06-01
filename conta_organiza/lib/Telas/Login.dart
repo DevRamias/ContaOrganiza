@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:conta_organiza/Telas/ListaContas.dart';
+import 'VerificaEmail.dart'; // Certifique-se de importar a tela de verificação de e-mail
 
 class Login extends StatefulWidget {
   @override
@@ -23,10 +24,18 @@ class _LoginScreenState extends State<Login> {
 
       User? user = userCredential.user;
       if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ListaContas()),
-        );
+        if (user.emailVerified) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ListaContas()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VerificaEmail(email: user.email!)),
+          );
+        }
       }
     } catch (e) {
       print("Erro ao fazer login: $e");
@@ -54,10 +63,18 @@ class _LoginScreenState extends State<Login> {
 
       User? user = userCredential.user;
       if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ListaContas()),
-        );
+        if (user.emailVerified) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ListaContas()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VerificaEmail(email: user.email!)),
+          );
+        }
       }
     } catch (e) {
       print("Erro ao fazer login com Google: $e");
@@ -198,9 +215,8 @@ class _LoginScreenState extends State<Login> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(290, 65), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(290, 65),
                 ),
                 onPressed: _login,
                 child: const Text(
@@ -225,12 +241,11 @@ class _LoginScreenState extends State<Login> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(290, 55), // Largura e altura mínimas
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  minimumSize: const Size(290, 55),
                 ),
                 icon: Image.asset(
-                  'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
+                  'assets/images/google_logo.png',
                   height: 24,
                 ),
                 onPressed: _loginComGoogle,
@@ -256,10 +271,9 @@ class _LoginScreenState extends State<Login> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8), // Ajuste o padding horizontal e vertical
-                  minimumSize: const Size(140, 40), // Largura e altura mínimas
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(140, 40),
                 ),
                 onPressed: () {
                   Navigator.pop(context);

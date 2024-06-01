@@ -6,6 +6,7 @@ import 'Telas/CadastrarUsuario.dart';
 import 'Telas/Inicio.dart';
 import 'Telas/ListaContas.dart';
 import 'Telas/Login.dart';
+import 'Telas/VerificaEmail.dart'; // Certifique-se de importar a tela de verificação de e-mail
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -47,6 +48,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Login(),
         '/cadastrar': (context) => CadastrarUsuario(),
         '/lista-contas': (context) => ListaContas(),
+        '/verificar-email': (context) => VerificaEmail(
+            email: ''), // Adicione a rota para a tela de verificação de e-mail
       },
     );
   }
@@ -62,7 +65,12 @@ class AuthWrapper extends StatelessWidget {
           return Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasData) {
-          return ListaContas();
+          User? user = snapshot.data;
+          if (user != null && user.emailVerified) {
+            return ListaContas();
+          } else {
+            return VerificaEmail(email: user?.email ?? '');
+          }
         }
         return TelaInicial();
       },

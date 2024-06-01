@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'Login.dart'; // Certifique-se de importar a tela de login
 
 class VerificaEmail extends StatelessWidget {
   final String email;
@@ -90,6 +91,35 @@ class VerificaEmail extends StatelessWidget {
               },
               child: const Text(
                 "Reenviar E-mail",
+                style: TextStyle(
+                  color: Color(0xffffffff),
+                  fontSize: 20,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                side: const BorderSide(
+                  width: 4.0,
+                  color: Color(0xff000D63),
+                ),
+                backgroundColor: const Color(0xff5E6DDB),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                minimumSize: const Size(290, 65),
+              ),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => Login()),
+                );
+              },
+              child: const Text(
+                "Ir para Login",
                 style: TextStyle(
                   color: Color(0xffffffff),
                   fontSize: 20,
