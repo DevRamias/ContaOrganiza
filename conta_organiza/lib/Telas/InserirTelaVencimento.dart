@@ -274,13 +274,14 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 ),
                 trailing: ElevatedButton(
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xff838DFF), // Cor de fundo
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.all(14), // Tamanho menor
                     elevation: 8,
                   ),
-                  child: Icon(Icons.add),
+                  child: Icon(Icons.add, color: Colors.black), // Ícone preto
                   onPressed: _mostrarDialogoAdicionarConta,
                 ),
               ),
