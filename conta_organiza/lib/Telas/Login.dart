@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:conta_organiza/Telas/ListaContas.dart';
 import 'VerificaEmail.dart'; // Certifique-se de importar a tela de verificação de e-mail
+import 'CadastrarUsuario.dart'; // Importar a tela de cadastro de usuário
 
 class Login extends StatefulWidget {
   @override
@@ -276,10 +277,13 @@ class _LoginScreenState extends State<Login> {
                   minimumSize: const Size(140, 40),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CadastrarUsuario()),
+                  );
                 },
                 child: const Text(
-                  "Cancelar",
+                  "Não possuo uma conta",
                   style: TextStyle(
                     color: Color(0xffffffff),
                     fontSize: 14,
