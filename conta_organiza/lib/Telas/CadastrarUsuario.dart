@@ -203,7 +203,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   ),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                  minimumSize: const Size(290, 55), // Largura e altura mínimas
                 ),
                 icon: Image.asset(
                   'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google

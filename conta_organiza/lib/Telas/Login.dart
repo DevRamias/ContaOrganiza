@@ -67,6 +67,30 @@ class _LoginScreenState extends State<Login> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text("Por favor, insira seu e-mail para redefinir a senha.")),
+      );
+      return;
+    }
+
+    try {
+      await _auth.sendPasswordResetEmail(email: _emailController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("E-mail de redefinição de senha enviado.")),
+      );
+    } catch (e) {
+      print("Erro ao enviar e-mail de redefinição de senha: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text("Erro ao enviar e-mail de redefinição de senha: $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,7 +173,20 @@ class _LoginScreenState extends State<Login> {
                 obscureText: true,
               ),
             ),
-            const SizedBox(height: 30),
+            Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                onPressed: _resetPassword,
+                child: const Text(
+                  "Esqueci minha senha",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 255, 0, 0),
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -163,11 +200,11 @@ class _LoginScreenState extends State<Login> {
                   ),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                  minimumSize: const Size(290, 65), // Largura e altura mínimas
                 ),
                 onPressed: _login,
                 child: const Text(
-                  "Login",
+                  "Entrar",
                   style: TextStyle(
                     color: Color(0xffffffff),
                     fontSize: 20,
@@ -176,21 +213,21 @@ class _LoginScreenState extends State<Login> {
                 ),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 30),
             Center(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   side: const BorderSide(
                     width: 4.0,
-                    color: Color(0xff000D63),
+                    color: Color(0xff5E6DDB),
                   ),
-                  backgroundColor: const Color(0xff5E6DDB),
+                  backgroundColor: Color.fromARGB(255, 255, 255, 255),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20), // Ajusta o padding horizontal
-                  minimumSize: const Size(240, 55), // Largura e altura mínimas
+                  minimumSize: const Size(290, 55), // Largura e altura mínimas
                 ),
                 icon: Image.asset(
                   'assets/images/google_logo.png', // Certifique-se de ter o ícone do Google
@@ -198,10 +235,40 @@ class _LoginScreenState extends State<Login> {
                 ),
                 onPressed: _loginComGoogle,
                 label: const Text(
-                  "Login com Google",
+                  "Continuar com Google",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    fontSize: 20,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  side: const BorderSide(
+                    width: 4.0,
+                    color: Color(0xff000D63),
+                  ),
+                  backgroundColor: const Color(0xff5E6DDB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8), // Ajuste o padding horizontal e vertical
+                  minimumSize: const Size(140, 40), // Largura e altura mínimas
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "Cancelar",
                   style: TextStyle(
                     color: Color(0xffffffff),
-                    fontSize: 20,
+                    fontSize: 14,
                     fontFamily: 'Inter',
                   ),
                 ),
