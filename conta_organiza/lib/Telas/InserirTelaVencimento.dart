@@ -104,11 +104,13 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
     }
   }
 
-  void _mostrarDialogoAdicionarConta() {
-    final _descricaoController = TextEditingController();
-    String? _diretorioSelecionado;
-    DateTime? _dataInicioSelecionada;
-    DateTime? _dataTerminoSelecionada;
+  void _mostrarDialogoAdicionarConta(
+      {Map<String, dynamic>? conta, int? index}) {
+    final _descricaoController =
+        TextEditingController(text: conta?['descricao']);
+    String? _diretorioSelecionado = conta?['diretorio'];
+    DateTime? _dataInicioSelecionada = conta?['dataInicio'];
+    DateTime? _dataTerminoSelecionada = conta?['dataTermino'];
 
     showDialog(
       context: context,
@@ -116,7 +118,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Adicionar Conta'),
+              title: Text(conta == null ? 'Adicionar Conta' : 'Editar Conta'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -156,7 +158,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                           onPressed: () async {
                             DateTime? pickedDate = await showDatePicker(
                               context: context,
-                              initialDate: DateTime.now(),
+                              initialDate:
+                                  _dataInicioSelecionada ?? DateTime.now(),
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2101),
                             );
@@ -199,7 +202,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                           onPressed: () async {
                             DateTime? pickedDate = await showDatePicker(
                               context: context,
-                              initialDate: DateTime.now(),
+                              initialDate:
+                                  _dataTerminoSelecionada ?? DateTime.now(),
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2101),
                             );
@@ -243,18 +247,27 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                         _diretorioSelecionado != null &&
                         _dataInicioSelecionada != null) {
                       setState(() {
-                        _contas.add({
-                          'descricao': _descricaoController.text,
-                          'diretorio': _diretorioSelecionado!,
-                          'dataInicio': _dataInicioSelecionada!,
-                          'dataTermino': _dataTerminoSelecionada,
-                        });
+                        if (conta == null) {
+                          _contas.add({
+                            'descricao': _descricaoController.text,
+                            'diretorio': _diretorioSelecionado!,
+                            'dataInicio': _dataInicioSelecionada!,
+                            'dataTermino': _dataTerminoSelecionada,
+                          });
+                        } else {
+                          _contas[index!] = {
+                            'descricao': _descricaoController.text,
+                            'diretorio': _diretorioSelecionado!,
+                            'dataInicio': _dataInicioSelecionada!,
+                            'dataTermino': _dataTerminoSelecionada,
+                          };
+                        }
                         _saveContas();
                       });
                       Navigator.of(context).pop();
                     }
                   },
-                  child: Text('Adicionar'),
+                  child: Text(conta == null ? 'Adicionar' : 'Salvar'),
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -278,18 +291,6 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
 
   @override
   Widget build(BuildContext context) {
-    DateTime now = DateTime.now();
-    List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      DateTime? dataInicio = conta['dataInicio'];
-      DateTime? dataTermino = conta['dataTermino'];
-      return (dataInicio != null &&
-              (dataInicio.isAfter(now) || dataInicio.isAtSameMomentAs(now))) &&
-          (dataTermino == null || dataTermino.isAfter(now));
-    }).toList();
-
-    contasFiltradas
-        .sort((a, b) => a['dataInicio']?.compareTo(b['dataInicio']) ?? 0);
-
     return Scaffold(
       appBar: CustomAppBar(
         userName: _userName,
@@ -348,19 +349,32 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                     elevation: 8,
                   ),
                   child: Icon(Icons.add, color: Colors.black),
-                  onPressed: _mostrarDialogoAdicionarConta,
+                  onPressed: () => _mostrarDialogoAdicionarConta(),
                 ),
               ),
-              if (contasFiltradas.isNotEmpty)
-                ...contasFiltradas.map((conta) {
+              if (_contas.isNotEmpty)
+                ..._contas.map((conta) {
+                  int index = _contas.indexOf(conta);
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
                         '${conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'}'),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        _removerConta(_contas.indexOf(conta));
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (String value) {
+                        if (value == 'Editar') {
+                          _mostrarDialogoAdicionarConta(
+                              conta: conta, index: index);
+                        } else if (value == 'Excluir') {
+                          _removerConta(index);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return {'Editar', 'Excluir'}.map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice,
+                            child: Text(choice),
+                          );
+                        }).toList();
                       },
                     ),
                   );
