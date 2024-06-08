@@ -58,7 +58,7 @@ class _DiretoriosState extends State<Diretorios> {
       } else {
         // Mostrar uma mensagem de erro se o diretório já existir
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Já existe um diretório com esse nome.'),
           ),
         );
@@ -90,7 +90,7 @@ class _DiretoriosState extends State<Diretorios> {
       } else {
         // Mostrar uma mensagem de erro se o diretório já existir
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Já existe um diretório com esse nome.'),
           ),
         );
@@ -128,7 +128,7 @@ class _DiretoriosState extends State<Diretorios> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Criar novo diretório'),
+        title: const Text('Criar novo diretório'),
         content: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(
@@ -137,7 +137,7 @@ class _DiretoriosState extends State<Diretorios> {
               onChanged: (value) {
                 dirName = value;
               },
-              decoration: InputDecoration(hintText: "Nome do diretório"),
+              decoration: const InputDecoration(hintText: "Nome do diretório"),
               maxLength: 20, // Limitar a 20 caracteres
             ),
           ),
@@ -147,7 +147,7 @@ class _DiretoriosState extends State<Diretorios> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -156,7 +156,7 @@ class _DiretoriosState extends State<Diretorios> {
               }
               Navigator.of(context).pop();
             },
-            child: Text('Criar'),
+            child: const Text('Criar'),
           ),
         ],
       ),
@@ -168,7 +168,7 @@ class _DiretoriosState extends State<Diretorios> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Renomear diretório'),
+        title: const Text('Renomear diretório'),
         content: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(
@@ -177,7 +177,8 @@ class _DiretoriosState extends State<Diretorios> {
               onChanged: (value) {
                 newName = value;
               },
-              decoration: InputDecoration(hintText: "Novo nome do diretório"),
+              decoration:
+                  const InputDecoration(hintText: "Novo nome do diretório"),
               maxLength: 20, // Limitar a 20 caracteres
             ),
           ),
@@ -187,7 +188,7 @@ class _DiretoriosState extends State<Diretorios> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -196,7 +197,7 @@ class _DiretoriosState extends State<Diretorios> {
               }
               Navigator.of(context).pop();
             },
-            child: Text('Renomear'),
+            child: const Text('Renomear'),
           ),
         ],
       ),
@@ -207,7 +208,7 @@ class _DiretoriosState extends State<Diretorios> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Excluir diretório'),
+        title: const Text('Excluir diretório'),
         content: Text(
             'Você tem certeza que deseja excluir o diretório ${dir['name']}?'),
         actions: [
@@ -215,14 +216,14 @@ class _DiretoriosState extends State<Diretorios> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
               await _deleteDirectory(dir);
               Navigator.of(context).pop();
             },
-            child: Text('Excluir'),
+            child: const Text('Excluir'),
           ),
         ],
       ),
@@ -243,8 +244,8 @@ class _DiretoriosState extends State<Diretorios> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: ReorderableGridView.builder(
-        padding: EdgeInsets.all(20),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        padding: const EdgeInsets.all(20),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
@@ -253,7 +254,7 @@ class _DiretoriosState extends State<Diretorios> {
         itemCount: _directories.length + 1,
         itemBuilder: (context, index) {
           if (index == _directories.length) {
-            return SizedBox(
+            return const SizedBox(
               key: ValueKey('spacer'),
               height: 80,
             );
@@ -284,11 +285,11 @@ class _DiretoriosState extends State<Diretorios> {
                         }
                       },
                       itemBuilder: (BuildContext context) => [
-                        PopupMenuItem<String>(
+                        const PopupMenuItem<String>(
                           value: 'renomear',
                           child: Text('Renomear'),
                         ),
-                        PopupMenuItem<String>(
+                        const PopupMenuItem<String>(
                           value: 'excluir',
                           child: Text('Excluir'),
                         ),
@@ -299,15 +300,15 @@ class _DiretoriosState extends State<Diretorios> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ImageIcon(
+                        const ImageIcon(
                           AssetImage('assets/images/diretorio.png'),
                           size: 60,
                           color: Color(0xff5E6DDB),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           dir['name'],
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                             color: Colors.black,
                             fontFamily: 'Inter',
@@ -327,8 +328,8 @@ class _DiretoriosState extends State<Diretorios> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDirectoryDialog,
-        backgroundColor: Color(0xff838dff),
-        child: ImageIcon(
+        backgroundColor: const Color(0xff838dff),
+        child: const ImageIcon(
           AssetImage('assets/images/AddDir.png'),
           color: Colors.black,
         ),

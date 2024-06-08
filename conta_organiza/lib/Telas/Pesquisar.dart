@@ -106,8 +106,8 @@ class _PesquisarState extends State<Pesquisar> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
+                  return const Center(
+                    child: const Text(
                       'Não foi possível exibir o PDF. Por favor, tente novamente mais tarde.',
                       textAlign: TextAlign.center,
                     ),
@@ -116,7 +116,7 @@ class _PesquisarState extends State<Pesquisar> {
                 try {
                   return PDFView(filePath: snapshot.data!.path);
                 } catch (e) {
-                  return Center(
+                  return const Center(
                     child: Text(
                       'Erro ao carregar o PDF. Por favor, tente novamente mais tarde.',
                       textAlign: TextAlign.center,
@@ -124,7 +124,7 @@ class _PesquisarState extends State<Pesquisar> {
                   );
                 }
               } else {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
             },
           ),
@@ -133,7 +133,7 @@ class _PesquisarState extends State<Pesquisar> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Fechar'),
+              child: const Text('Fechar'),
             ),
           ],
         );
@@ -173,11 +173,11 @@ class _PesquisarState extends State<Pesquisar> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
-                  return Center(child: Text('Erro ao carregar a imagem'));
+                  return const Center(child: Text('Erro ao carregar a imagem'));
                 }
                 return Image.network(url);
               } else {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
             },
           ),
@@ -186,7 +186,7 @@ class _PesquisarState extends State<Pesquisar> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Fechar'),
+              child: const Text('Fechar'),
             ),
           ],
         );
@@ -220,7 +220,7 @@ class _PesquisarState extends State<Pesquisar> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Editar Detalhes do Arquivo'),
+        title: const Text('Editar Detalhes do Arquivo'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -230,12 +230,12 @@ class _PesquisarState extends State<Pesquisar> {
                   description = value;
                 },
                 controller: TextEditingController(text: description),
-                decoration: InputDecoration(labelText: 'Descrição'),
+                decoration: const InputDecoration(labelText: 'Descrição'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Text('Vencimento: '),
+                  const Text('Vencimento: '),
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
@@ -254,12 +254,12 @@ class _PesquisarState extends State<Pesquisar> {
                       },
                       child: Row(
                         children: [
-                          Icon(Icons.access_time),
-                          SizedBox(width: 5),
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 5),
                           Text(
                             DateFormat('dd/MM/yyyy').format(date),
-                            style:
-                                TextStyle(decoration: TextDecoration.underline),
+                            style: const TextStyle(
+                                decoration: TextDecoration.underline),
                           ),
                         ],
                       ),
@@ -275,7 +275,7 @@ class _PesquisarState extends State<Pesquisar> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -293,7 +293,7 @@ class _PesquisarState extends State<Pesquisar> {
               });
               await _loadFiles();
             },
-            child: Text('Salvar'),
+            child: const Text('Salvar'),
           ),
         ],
       ),
@@ -328,7 +328,7 @@ class _PesquisarState extends State<Pesquisar> {
         child: Column(
           children: [
             TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Nome do Arquivo',
                 border: OutlineInputBorder(),
               ),
@@ -339,16 +339,16 @@ class _PesquisarState extends State<Pesquisar> {
                 _filterFiles();
               },
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Row(
               children: [
-                Text('Data: '),
+                const Text('Data: '),
                 Expanded(
                   child: GestureDetector(
                     onTap: () => _selectDate(context),
                     child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      decoration: BoxDecoration(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      decoration: const BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
                             color: Colors.grey,
@@ -360,7 +360,7 @@ class _PesquisarState extends State<Pesquisar> {
                         _selectedDate != null
                             ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
                             : 'Selecionar Data',
-                        style: TextStyle(
+                        style: const TextStyle(
                           decoration: TextDecoration.underline,
                           color: Colors.blue,
                         ),
@@ -370,7 +370,7 @@ class _PesquisarState extends State<Pesquisar> {
                 ),
                 if (_selectedDate != null)
                   IconButton(
-                    icon: Icon(Icons.clear),
+                    icon: const Icon(Icons.clear),
                     onPressed: () {
                       setState(() {
                         _selectedDate = null;
@@ -380,7 +380,7 @@ class _PesquisarState extends State<Pesquisar> {
                   ),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
                 itemCount: _filteredFiles.length,
@@ -426,19 +426,19 @@ class _PesquisarState extends State<Pesquisar> {
                       },
                       itemBuilder: (BuildContext context) {
                         return [
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'view',
                             child: Text('Visualizar'),
                           ),
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'download',
                             child: Text('Download'),
                           ),
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'edit',
                             child: Text('Editar'),
                           ),
-                          PopupMenuItem(
+                          const PopupMenuItem(
                             value: 'delete',
                             child: Text('Excluir'),
                           ),

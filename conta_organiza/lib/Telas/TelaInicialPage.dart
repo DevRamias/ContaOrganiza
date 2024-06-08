@@ -113,18 +113,18 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Adicionar Comprovante'),
+              title: const Text('Adicionar Comprovante'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: _descricaoController,
-                    decoration:
-                        InputDecoration(labelText: 'Descrição do Arquivo'),
+                    decoration: const InputDecoration(
+                        labelText: 'Descrição do Arquivo'),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
-                    decoration: InputDecoration(labelText: 'Diretório'),
+                    decoration: const InputDecoration(labelText: 'Diretório'),
                     value: _diretorioSelecionado,
                     items: _diretorios.map((String value) {
                       return DropdownMenuItem<String>(
@@ -145,7 +145,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('Cancelar'),
+                  child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -161,13 +161,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       }
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Por favor, preencha todos os campos.'),
                         ),
                       );
                     }
                   },
-                  child: Text('Adicionar'),
+                  child: const Text('Adicionar'),
                 ),
               ],
             );
@@ -255,21 +255,21 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Desmarcar como paga'),
-        content:
-            Text('Você tem certeza que deseja desmarcar esta conta como paga?'),
+        title: const Text('Desmarcar como paga'),
+        content: const Text(
+            'Você tem certeza que deseja desmarcar esta conta como paga?'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(false);
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(true);
             },
-            child: Text('Desmarcar'),
+            child: const Text('Desmarcar'),
           ),
         ],
       ),
@@ -301,7 +301,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Diretório não encontrado.'),
         ),
       );
@@ -322,7 +322,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Tela Inicial'),
+        title: const Text('Tela Inicial'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -331,16 +331,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
           children: [
             Text(
               'Data Atual: $dataAtual',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Expanded(
               child: Card(
                 elevation: 4,
-                margin: EdgeInsets.symmetric(vertical: 8),
+                margin: const EdgeInsets.symmetric(vertical: 8),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ListView.builder(
@@ -353,7 +353,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       bool hasComprovante = conta['comprovante'];
 
                       return Container(
-                        margin: EdgeInsets.symmetric(vertical: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: hasComprovante
                               ? Colors.green[100]
@@ -379,17 +379,17 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.attach_file),
+                                icon: const Icon(Icons.attach_file),
                                 onPressed: () =>
                                     _mostrarDialogoUpload(conta, false),
                               ),
                               IconButton(
-                                icon: Icon(Icons.camera_alt),
+                                icon: const Icon(Icons.camera_alt),
                                 onPressed: () =>
                                     _mostrarDialogoUpload(conta, true),
                               ),
                               IconButton(
-                                icon: Icon(Icons.folder_open),
+                                icon: const Icon(Icons.folder_open),
                                 onPressed: () =>
                                     _navigateToDirectory(conta['diretorio']),
                               ),

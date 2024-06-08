@@ -24,7 +24,8 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
           await _auth.fetchSignInMethodsForEmail(_emailController.text);
       if (signInMethods.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("E-mail já está em uso. Tente outro e-mail.")),
+          const SnackBar(
+              content: Text("E-mail já está em uso. Tente outro e-mail.")),
         );
         return;
       }
@@ -72,7 +73,8 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
       User? user = userCredential.user;
       if (user != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Cadastro com Google realizado com sucesso!")),
+          const SnackBar(
+              content: Text("Cadastro com Google realizado com sucesso!")),
         );
         Navigator.pushReplacement(
           context,
@@ -204,7 +206,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                     width: 4.0,
                     color: Color(0xff5E6DDB),
                   ),
-                  backgroundColor: Color.fromARGB(255, 255, 255, 255),
+                  backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

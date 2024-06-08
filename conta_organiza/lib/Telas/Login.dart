@@ -28,7 +28,7 @@ class _LoginScreenState extends State<Login> {
         if (user.emailVerified) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ListaContas()),
+            MaterialPageRoute(builder: (context) => const ListaContas()),
           );
         } else {
           Navigator.pushReplacement(
@@ -67,7 +67,7 @@ class _LoginScreenState extends State<Login> {
         if (user.emailVerified) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => ListaContas()),
+            MaterialPageRoute(builder: (context) => const ListaContas()),
           );
         } else {
           Navigator.pushReplacement(
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<Login> {
   Future<void> _resetPassword() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
             content:
                 Text("Por favor, insira seu e-mail para redefinir a senha.")),
       );
@@ -98,7 +98,8 @@ class _LoginScreenState extends State<Login> {
     try {
       await _auth.sendPasswordResetEmail(email: _emailController.text);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("E-mail de redefinição de senha enviado.")),
+        const SnackBar(
+            content: Text("E-mail de redefinição de senha enviado.")),
       );
     } catch (e) {
       print("Erro ao enviar e-mail de redefinição de senha: $e");
@@ -238,7 +239,7 @@ class _LoginScreenState extends State<Login> {
                     width: 4.0,
                     color: Color(0xff5E6DDB),
                   ),
-                  backgroundColor: Color.fromARGB(255, 255, 255, 255),
+                  backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -279,7 +280,8 @@ class _LoginScreenState extends State<Login> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CadastrarUsuario()),
+                    MaterialPageRoute(
+                        builder: (context) => const CadastrarUsuario()),
                   );
                 },
                 child: const Text(

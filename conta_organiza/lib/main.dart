@@ -32,14 +32,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
-        const Locale('en', 'US'), // English
-        const Locale('pt', 'BR'), // Portuguese
+      supportedLocales: const [
+        Locale('en', 'US'), // English
+        Locale('pt', 'BR'), // Portuguese
       ],
       initialRoute: '/',
       routes: {

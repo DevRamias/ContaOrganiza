@@ -98,7 +98,7 @@ class _InfoContaState extends State<InfoConta> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Informações do arquivo'),
+        title: const Text('Informações do arquivo'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -107,12 +107,12 @@ class _InfoContaState extends State<InfoConta> {
                 onChanged: (value) {
                   description = value;
                 },
-                decoration: InputDecoration(labelText: 'Descrição'),
+                decoration: const InputDecoration(labelText: 'Descrição'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Text('Vencimento: '),
+                  const Text('Vencimento: '),
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
@@ -131,12 +131,12 @@ class _InfoContaState extends State<InfoConta> {
                       },
                       child: Row(
                         children: [
-                          Icon(Icons.access_time),
-                          SizedBox(width: 5),
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 5),
                           Text(
                             DateFormat('dd/MM/yyyy').format(date),
-                            style:
-                                TextStyle(decoration: TextDecoration.underline),
+                            style: const TextStyle(
+                                decoration: TextDecoration.underline),
                           ),
                         ],
                       ),
@@ -152,14 +152,14 @@ class _InfoContaState extends State<InfoConta> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _uploadFile(file, description, date);
             },
-            child: Text('Salvar'),
+            child: const Text('Salvar'),
           ),
         ],
       ),
@@ -248,7 +248,7 @@ class _InfoContaState extends State<InfoConta> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Editar Detalhes do Arquivo'),
+        title: const Text('Editar Detalhes do Arquivo'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -258,12 +258,12 @@ class _InfoContaState extends State<InfoConta> {
                   description = value;
                 },
                 controller: TextEditingController(text: description),
-                decoration: InputDecoration(labelText: 'Descrição'),
+                decoration: const InputDecoration(labelText: 'Descrição'),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Row(
                 children: [
-                  Text('Vencimento: '),
+                  const Text('Vencimento: '),
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
@@ -282,12 +282,12 @@ class _InfoContaState extends State<InfoConta> {
                       },
                       child: Row(
                         children: [
-                          Icon(Icons.access_time),
-                          SizedBox(width: 5),
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 5),
                           Text(
                             DateFormat('dd/MM/yyyy').format(date),
-                            style:
-                                TextStyle(decoration: TextDecoration.underline),
+                            style: const TextStyle(
+                                decoration: TextDecoration.underline),
                           ),
                         ],
                       ),
@@ -303,7 +303,7 @@ class _InfoContaState extends State<InfoConta> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancelar'),
+            child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
@@ -321,7 +321,7 @@ class _InfoContaState extends State<InfoConta> {
               });
               await _loadFiles();
             },
-            child: Text('Salvar'),
+            child: const Text('Salvar'),
           ),
         ],
       ),
@@ -338,11 +338,11 @@ class _InfoContaState extends State<InfoConta> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
-                  return Center(child: Text('Erro ao carregar a imagem'));
+                  return const Center(child: Text('Erro ao carregar a imagem'));
                 }
                 return Image.network(url);
               } else {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
             },
           ),
@@ -351,7 +351,7 @@ class _InfoContaState extends State<InfoConta> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Fechar'),
+              child: const Text('Fechar'),
             ),
           ],
         );
@@ -380,7 +380,7 @@ class _InfoContaState extends State<InfoConta> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 if (snapshot.hasError) {
-                  return Center(
+                  return const Center(
                     child: Text(
                       'Não foi possível exibir o PDF. Por favor, tente novamente mais tarde.',
                       textAlign: TextAlign.center,
@@ -390,7 +390,7 @@ class _InfoContaState extends State<InfoConta> {
                 try {
                   return PDFView(filePath: snapshot.data!.path);
                 } catch (e) {
-                  return Center(
+                  return const Center(
                     child: Text(
                       'Erro ao carregar o PDF. Por favor, tente novamente mais tarde.',
                       textAlign: TextAlign.center,
@@ -398,7 +398,7 @@ class _InfoContaState extends State<InfoConta> {
                   );
                 }
               } else {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
             },
           ),
@@ -407,7 +407,7 @@ class _InfoContaState extends State<InfoConta> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Fechar'),
+              child: const Text('Fechar'),
             ),
           ],
         );
@@ -465,17 +465,17 @@ class _InfoContaState extends State<InfoConta> {
         title: Text(widget.directory['name']),
         actions: [
           IconButton(
-            icon: Icon(Icons.add_a_photo),
+            icon: const Icon(Icons.add_a_photo),
             onPressed: _pickImage,
           ),
           IconButton(
-            icon: Icon(Icons.attach_file),
+            icon: const Icon(Icons.attach_file),
             onPressed: _pickFiles,
           ),
         ],
       ),
       body: _isUploading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: groupedFiles.entries.map((yearEntry) {
                 String year = yearEntry.key;
@@ -488,8 +488,8 @@ class _InfoContaState extends State<InfoConta> {
                     color: Colors.grey,
                   ),
                   title: Text(year,
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
                   children: months.entries.map((monthEntry) {
                     String month = monthEntry.key;
                     List<Map<String, dynamic>> files = monthEntry.value;
@@ -499,7 +499,7 @@ class _InfoContaState extends State<InfoConta> {
                         width: 4,
                         color: Colors.grey,
                       ),
-                      title: Text(month, style: TextStyle(fontSize: 18)),
+                      title: Text(month, style: const TextStyle(fontSize: 18)),
                       children: files.map((fileData) {
                         final description = fileData['description'];
                         final date = fileData['date'];
@@ -534,7 +534,7 @@ class _InfoContaState extends State<InfoConta> {
                                     _showImagePreview(url);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Text(
                                             'Tipo de arquivo não suportado para visualização.'),
                                       ),
@@ -554,19 +554,19 @@ class _InfoContaState extends State<InfoConta> {
                             },
                             itemBuilder: (BuildContext context) {
                               return [
-                                PopupMenuItem(
+                                const PopupMenuItem(
                                   value: 'view',
                                   child: Text('Visualizar'),
                                 ),
-                                PopupMenuItem(
+                                const PopupMenuItem(
                                   value: 'download',
                                   child: Text('Download'),
                                 ),
-                                PopupMenuItem(
+                                const PopupMenuItem(
                                   value: 'edit',
                                   child: Text('Editar'),
                                 ),
-                                PopupMenuItem(
+                                const PopupMenuItem(
                                   value: 'delete',
                                   child: Text('Excluir'),
                                 ),

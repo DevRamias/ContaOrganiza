@@ -20,7 +20,7 @@ class _ConfiguracoesState extends State<Configuracoes> {
     try {
       await _auth.signOut();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Deslogado com sucesso!")),
+        const SnackBar(content: Text("Deslogado com sucesso!")),
       );
       Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     } catch (e) {
@@ -34,14 +34,11 @@ class _ConfiguracoesState extends State<Configuracoes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Configurações'),
-      ),
       body: ListView(
         children: [
           ListTile(
             leading: Container(
-              margin: EdgeInsets.symmetric(horizontal: 0.0),
+              margin: const EdgeInsets.symmetric(horizontal: 0.0),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -49,12 +46,12 @@ class _ConfiguracoesState extends State<Configuracoes> {
                   color: Colors.black,
                 ),
               ),
-              child: CircleAvatar(
+              child: const CircleAvatar(
                 backgroundImage: AssetImage('assets/images/Foto do perfil.png'),
               ),
             ),
-            title: Text('Perfil'),
-            trailing: Icon(Icons.chevron_right),
+            title: const Text('Perfil'),
+            trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
                 context,
@@ -67,34 +64,35 @@ class _ConfiguracoesState extends State<Configuracoes> {
             },
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
+            margin: const EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Colors.black)),
             ),
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
+            margin: const EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Colors.black)),
             ),
           ),
           ListTile(
-            leading: CircleAvatar(
+            leading: const CircleAvatar(
               backgroundImage:
                   AssetImage('assets/images/Icone Notificacao.png'),
             ),
-            title: Text('Notificações'),
-            trailing: Icon(Icons.chevron_right),
+            title: const Text('Notificações'),
+            trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => TelaNotificacao()),
+                MaterialPageRoute(
+                    builder: (context) => const TelaNotificacao()),
               );
             },
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
+            margin: const EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Colors.black)),
             ),
           ),
@@ -106,21 +104,21 @@ class _ConfiguracoesState extends State<Configuracoes> {
                 fit: BoxFit.cover, // Ajuste a imagem para cobrir o espaço
               ),
             ),
-            title: Text('Data de vencimento'),
-            trailing: Icon(Icons.chevron_right),
+            title: const Text('Data de vencimento'),
+            trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      InserirTelaVencimento(), // Certifique-se de criar a TelaVencimento
+                      const InserirTelaVencimento(), // Certifique-se de criar a TelaVencimento
                 ),
               );
             },
           ),
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 6.0),
-            decoration: BoxDecoration(
+            margin: const EdgeInsets.symmetric(horizontal: 6.0),
+            decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Colors.black)),
             ),
           ),
@@ -128,11 +126,11 @@ class _ConfiguracoesState extends State<Configuracoes> {
           Center(
             child: ElevatedButton.icon(
               onPressed: _logout,
-              icon: Icon(
+              icon: const Icon(
                 Icons.power_settings_new,
                 color: Colors.black, // Cor do ícone preto
               ),
-              label: Text(
+              label: const Text(
                 'Deslogar',
                 style: TextStyle(
                   fontFamily: 'Inter',
@@ -140,7 +138,7 @@ class _ConfiguracoesState extends State<Configuracoes> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xff838dff), // Cor de fundo roxa
+                backgroundColor: const Color(0xff838dff), // Cor de fundo roxa
               ),
             ),
           ),

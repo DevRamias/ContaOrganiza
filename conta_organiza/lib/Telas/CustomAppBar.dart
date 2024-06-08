@@ -8,7 +8,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Function(String) onUpdateProfileImage;
   final Function(String) onUpdateUserName;
 
-  CustomAppBar({
+  const CustomAppBar({
     required this.title,
     required this.onUpdateProfileImage,
     required this.onUpdateUserName,
@@ -20,7 +20,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   _CustomAppBarState createState() => _CustomAppBarState();
 
   @override
-  Size get preferredSize => Size.fromHeight(100);
+  Size get preferredSize => const Size.fromHeight(100);
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
@@ -80,7 +80,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
               const SizedBox(width: 10),
               Text(
                 _userName,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20,
                   color: Colors.white,
                   fontFamily: 'Inter',

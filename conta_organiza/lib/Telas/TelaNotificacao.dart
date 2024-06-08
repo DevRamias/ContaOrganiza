@@ -96,15 +96,15 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
                     Navigator.of(context).pop();
                   },
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    margin: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 8.0),
+                    margin: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color:
-                          Color(0xffD2D6FF), // Cor de fundo ao redor do botão
+                      color: const Color(
+                          0xffD2D6FF), // Cor de fundo ao redor do botão
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.arrow_back, color: Colors.black),
@@ -122,7 +122,7 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
                 ),
               ),
               ListTile(
-                title: Text(
+                title: const Text(
                   'Receber notificações push',
                   style: TextStyle(fontFamily: 'Inter'),
                 ),
@@ -132,13 +132,13 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
                 ),
               ),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 6.0),
-                decoration: BoxDecoration(
+                margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.black)),
                 ),
               ),
               ListTile(
-                title: Text(
+                title: const Text(
                   'Notificações por email',
                   style: TextStyle(fontFamily: 'Inter'),
                 ),
@@ -148,8 +148,8 @@ class _TelaNotificacaoState extends State<TelaNotificacao> {
                 ),
               ),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 6.0),
-                decoration: BoxDecoration(
+                margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.black)),
                 ),
               ),

@@ -154,10 +154,10 @@ class _ListaContasState extends State<ListaContas> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
-      TelaInicialPage(),
-      Diretorios(),
+      const TelaInicialPage(),
+      const Diretorios(),
       _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : Pesquisar(/*files: _files*/),
       Configuracoes(onUpdateProfile: _updateProfile),
     ];
@@ -188,10 +188,10 @@ class _ListaContasState extends State<ListaContas> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color(0xff838DFF),
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Padding(
-              padding: const EdgeInsets.only(bottom: 0.0),
+              padding: EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
                 height: 35,
                 width: 35,
@@ -202,7 +202,7 @@ class _ListaContasState extends State<ListaContas> {
           ),
           BottomNavigationBarItem(
             icon: Padding(
-              padding: const EdgeInsets.only(bottom: 0.0),
+              padding: EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
                 height: 35,
                 width: 35,
@@ -213,7 +213,7 @@ class _ListaContasState extends State<ListaContas> {
           ),
           BottomNavigationBarItem(
             icon: Padding(
-              padding: const EdgeInsets.only(bottom: 0.0),
+              padding: EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
                 height: 35,
                 width: 35,
@@ -224,7 +224,7 @@ class _ListaContasState extends State<ListaContas> {
           ),
           BottomNavigationBarItem(
             icon: Padding(
-              padding: const EdgeInsets.only(bottom: 0.0),
+              padding: EdgeInsets.only(bottom: 0.0),
               child: SizedBox(
                 height: 35,
                 width: 35,

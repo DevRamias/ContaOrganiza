@@ -125,11 +125,11 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   children: [
                     TextField(
                       controller: _descricaoController,
-                      decoration: InputDecoration(labelText: 'Descrição'),
+                      decoration: const InputDecoration(labelText: 'Descrição'),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     DropdownButtonFormField<String>(
-                      decoration: InputDecoration(labelText: 'Diretório'),
+                      decoration: const InputDecoration(labelText: 'Diretório'),
                       value: _diretorioSelecionado,
                       items: _diretorios.map((String value) {
                         return DropdownMenuItem<String>(
@@ -143,7 +143,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                         });
                       },
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
@@ -169,7 +169,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                               });
                             }
                           },
-                          child: Row(
+                          child: const Row(
                             children: [
                               Icon(Icons.calendar_today, size: 16),
                               SizedBox(width: 5),
@@ -187,7 +187,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
@@ -213,7 +213,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                               });
                             }
                           },
-                          child: Row(
+                          child: const Row(
                             children: [
                               Icon(Icons.calendar_today, size: 16),
                               SizedBox(width: 5),
@@ -239,7 +239,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('Cancelar'),
+                  child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -310,14 +310,14 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                     Navigator.of(context).pop();
                   },
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    margin: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 8.0),
+                    margin: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color: Color(0xffD2D6FF),
+                      color: const Color(0xffD2D6FF),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.arrow_back, color: Colors.black),
@@ -335,20 +335,20 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 ),
               ),
               ListTile(
-                title: Text(
+                title: const Text(
                   'Contas adicionadas',
                   style: TextStyle(fontFamily: 'Inter'),
                 ),
                 trailing: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff838DFF),
+                    backgroundColor: const Color(0xff838DFF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(14),
                     elevation: 8,
                   ),
-                  child: Icon(Icons.add, color: Colors.black),
+                  child: const Icon(Icons.add, color: Colors.black),
                   onPressed: () => _mostrarDialogoAdicionarConta(),
                 ),
               ),

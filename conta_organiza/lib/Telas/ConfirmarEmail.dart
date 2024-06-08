@@ -11,7 +11,7 @@ class ConfirmarEmail extends StatelessWidget {
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('E-mail ainda não verificado.')),
+        const SnackBar(content: const Text('E-mail ainda não verificado.')),
       );
     }
   }

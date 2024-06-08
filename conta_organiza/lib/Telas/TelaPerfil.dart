@@ -123,10 +123,10 @@ class _TelaPerfilState extends State<TelaPerfil> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Digitar Nome de Usuário'),
+          title: const Text('Digitar Nome de Usuário'),
           content: TextField(
             controller: _nameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Nome',
               border: OutlineInputBorder(),
             ),
@@ -136,14 +136,14 @@ class _TelaPerfilState extends State<TelaPerfil> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancelar'),
+              child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () {
                 _updateName();
                 Navigator.of(context).pop();
               },
-              child: Text('Salvar'),
+              child: const Text('Salvar'),
             ),
           ],
         );
@@ -156,21 +156,21 @@ class _TelaPerfilState extends State<TelaPerfil> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Escolha uma opção'),
+          title: const Text('Escolha uma opção'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text('Tirar Foto'),
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tirar Foto'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('Escolher da Galeria'),
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Escolher da Galeria'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery);
@@ -209,24 +209,18 @@ class _TelaPerfilState extends State<TelaPerfil> {
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
                   onTap: () {
-                    // Substituir a tela atual pela ListaContas
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ListaContas(),
-                      ),
-                    );
+                    Navigator.of(context).pop();
                   },
                   child: Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    margin: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 8.0),
+                    margin: const EdgeInsets.all(8.0),
                     decoration: BoxDecoration(
-                      color:
-                          Color(0xffD2D6FF), // Cor de fundo ao redor do botão
+                      color: const Color(
+                          0xffD2D6FF), // Cor de fundo ao redor do botão
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.arrow_back, color: Colors.black),
@@ -252,25 +246,25 @@ class _TelaPerfilState extends State<TelaPerfil> {
                           ? AssetImage(_userProfileImage) as ImageProvider
                           : NetworkImage(_userProfileImage),
                 ),
-                title: Text('Trocar Foto do Perfil'),
-                trailing: Icon(Icons.chevron_right),
+                title: const Text('Trocar Foto do Perfil'),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: _showImageSourceDialog,
               ),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 6.0),
-                decoration: BoxDecoration(
+                margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.black)),
                 ),
               ),
               ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('Editar Nome de Usuário'),
-                trailing: Icon(Icons.chevron_right),
+                leading: const Icon(Icons.edit),
+                title: const Text('Editar Nome de Usuário'),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: _showEditNameDialog,
               ),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 6.0),
-                decoration: BoxDecoration(
+                margin: const EdgeInsets.symmetric(horizontal: 6.0),
+                decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Colors.black)),
                 ),
               ),
@@ -278,6 +272,21 @@ class _TelaPerfilState extends State<TelaPerfil> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // Substituir a tela atual pela ListaContas
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ListaContas(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.save),
+        label: const Text('Salvar Alterações'),
+        backgroundColor: const Color(0xffD2D6FF),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
