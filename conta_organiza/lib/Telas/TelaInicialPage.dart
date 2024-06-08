@@ -71,7 +71,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         _diretorios = directoriesSnapshot.docs.map((doc) => doc.id).toList();
         _diretoriosMap = {
           for (var doc in directoriesSnapshot.docs)
-            doc.id: (doc.data() as Map<String, dynamic>)['nome'] ?? doc.id
+            doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
         };
       });
     }
@@ -158,6 +158,12 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         await _uploadFile(conta, _descricaoController.text,
                             _diretorioSelecionado!);
                       }
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Por favor, preencha todos os campos.'),
+                        ),
+                      );
                     }
                   },
                   child: Text('Adicionar'),
