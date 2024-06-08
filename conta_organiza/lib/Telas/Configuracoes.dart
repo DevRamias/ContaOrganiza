@@ -1,6 +1,6 @@
-import 'package:conta_organiza/Telas/InserirTelaVencimento.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'InserirTelaVencimento.dart';
 import 'TelaPerfil.dart';
 import 'TelaNotificacao.dart';
 
@@ -34,6 +34,9 @@ class _ConfiguracoesState extends State<Configuracoes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Configurações'),
+      ),
       body: ListView(
         children: [
           ListTile(
@@ -97,18 +100,21 @@ class _ConfiguracoesState extends State<Configuracoes> {
           ),
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: AssetImage(
-                  'assets/images/Icone Vencimento.png'), // Adicione a imagem do ícone de vencimento
+              backgroundColor: Colors.transparent, // Definir fundo transparente
+              child: Image.asset(
+                'assets/images/Icone Vencimento.png', // Adicione a imagem do ícone de vencimento
+                fit: BoxFit.cover, // Ajuste a imagem para cobrir o espaço
+              ),
             ),
             title: Text('Data de vencimento'),
             trailing: Icon(Icons.chevron_right),
             onTap: () {
-              // Adicione a navegação para a tela de Data de Vencimento
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) =>
-                        InserirTelaVencimento()), // Certifique-se de criar a TelaVencimento
+                  builder: (context) =>
+                      InserirTelaVencimento(), // Certifique-se de criar a TelaVencimento
+                ),
               );
             },
           ),
