@@ -2,7 +2,6 @@ import 'package:conta_organiza/Telas/InserirTelaVencimento.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'TelaPerfil.dart';
-import 'TelaConta.dart';
 import 'TelaNotificacao.dart';
 
 class Configuracoes extends StatefulWidget {
@@ -69,19 +68,6 @@ class _ConfiguracoesState extends State<Configuracoes> {
             decoration: BoxDecoration(
               border: Border(bottom: BorderSide(color: Colors.black)),
             ),
-          ),
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/Icone Conta.png'),
-            ),
-            title: Text('Conta'),
-            trailing: Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => TelaConta()),
-              );
-            },
           ),
           Container(
             margin: EdgeInsets.symmetric(horizontal: 6.0),
