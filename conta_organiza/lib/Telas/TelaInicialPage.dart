@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'InfoConta.dart';
 
 class TelaInicialPage extends StatefulWidget {
   const TelaInicialPage({super.key});
@@ -283,15 +284,35 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
+  Future<void> _navigateToDirectory(String directoryId) async {
+    DocumentSnapshot directorySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_currentUser!.uid)
+        .collection('directories')
+        .doc(directoryId)
+        .get();
+
+    if (directorySnapshot.exists) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => InfoConta(directory: directorySnapshot),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Diretório não encontrado.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      DateTime? dataInicio = conta['dataInicio'];
-      DateTime? dataTermino = conta['dataTermino'];
-      return (dataInicio != null &&
-              (dataInicio.isBefore(now) || dataInicio.isAtSameMomentAs(now))) &&
-          (dataTermino == null || dataTermino.isAfter(now));
+      return !conta['comprovante'];
     }).toList();
 
     contasFiltradas
@@ -366,6 +387,11 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                                 icon: Icon(Icons.camera_alt),
                                 onPressed: () =>
                                     _mostrarDialogoUpload(conta, true),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.folder_open),
+                                onPressed: () =>
+                                    _navigateToDirectory(conta['diretorio']),
                               ),
                               PopupMenuButton<String>(
                                 onSelected: (String value) {

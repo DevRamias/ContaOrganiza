@@ -243,7 +243,7 @@ class _CadastrarUsuarioState extends State<CadastrarUsuario> {
                   minimumSize: const Size(140, 40),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/');
                 },
                 child: const Text(
                   "Cancelar",
