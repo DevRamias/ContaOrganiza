@@ -47,12 +47,11 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                   return {
                     'descricao': conta['descricao'],
                     'diretorio': conta['diretorio'],
-                    'dataInicio': conta['dataInicio'] != null
-                        ? (conta['dataInicio'] as Timestamp).toDate()
+                    'dataVencimento': conta['dataVencimento'] != null
+                        ? (conta['dataVencimento'] as Timestamp).toDate()
                         : null,
-                    'dataTermino': conta['dataTermino'] != null
-                        ? (conta['dataTermino'] as Timestamp).toDate()
-                        : null,
+                    'quantidadeParcelas': conta['quantidadeParcelas'],
+                    'contaFixa': conta['contaFixa'] ?? false,
                     'comprovante': conta['comprovante'] ?? false,
                     'comprovanteUrl': conta['comprovanteUrl'] ?? '',
                   };
@@ -113,12 +112,11 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
             return {
               'descricao': conta['descricao'],
               'diretorio': conta['diretorio'],
-              'dataInicio': conta['dataInicio'] != null
-                  ? Timestamp.fromDate(conta['dataInicio'])
+              'dataVencimento': conta['dataVencimento'] != null
+                  ? Timestamp.fromDate(conta['dataVencimento'])
                   : null,
-              'dataTermino': conta['dataTermino'] != null
-                  ? Timestamp.fromDate(conta['dataTermino'])
-                  : null,
+              'quantidadeParcelas': conta['quantidadeParcelas'],
+              'contaFixa': conta['contaFixa'],
               'comprovante': conta['comprovante'],
               'comprovanteUrl': conta['comprovanteUrl'],
             };
@@ -351,54 +349,44 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  DateTime calcularDataVencimento(DateTime dataTermino) {
-    DateTime now = DateTime.now();
-    int year = now.year;
-    int month = now.month;
-    int day = dataTermino.day;
+  DateTime calcularDataVencimento(DateTime dataVencimento, int parcelaAtual) {
+    return DateTime(dataVencimento.year,
+        dataVencimento.month + parcelaAtual - 1, dataVencimento.day);
+  }
 
-    // Ajusta automaticamente o dia se for inválido para o mês atual
-    return DateTime(year, month, day);
+  int calcularParcelaAtual(DateTime dataVencimento) {
+    DateTime now = DateTime.now();
+    int monthsDifference = (now.year - dataVencimento.year) * 12 +
+        now.month -
+        dataVencimento.month;
+    return monthsDifference + 1;
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      // Filtrar contas do mês atual ou contas não pagas
-      DateTime? dataTermino = conta['dataTermino'];
-      DateTime dataVencimento = dataTermino != null
-          ? calcularDataVencimento(dataTermino)
-          : DateTime.now();
-      bool isCurrentMonth =
-          dataVencimento.month == now.month && dataVencimento.year == now.year;
+      DateTime? dataVencimento = conta['dataVencimento'];
+      if (dataVencimento == null) return false;
+      int parcelaAtual = calcularParcelaAtual(dataVencimento);
+      bool isCurrentMonth = parcelaAtual > 0 &&
+          parcelaAtual <= (conta['quantidadeParcelas'] ?? parcelaAtual);
       return isCurrentMonth || !conta['comprovante'];
     }).toList();
 
     // Ordenar contas
     contasFiltradas.sort((a, b) {
-      DateTime? dataTerminoA = a['dataTermino'];
-      DateTime? dataTerminoB = b['dataTermino'];
-      DateTime dataVencimentoA = dataTerminoA != null
-          ? calcularDataVencimento(dataTerminoA)
-          : DateTime.now();
-      DateTime dataVencimentoB = dataTerminoB != null
-          ? calcularDataVencimento(dataTerminoB)
-          : DateTime.now();
+      DateTime? dataVencimentoA = a['dataVencimento'];
+      DateTime? dataVencimentoB = b['dataVencimento'];
+      if (dataVencimentoA == null || dataVencimentoB == null) return 0;
+      int parcelaAtualA = calcularParcelaAtual(dataVencimentoA);
+      int parcelaAtualB = calcularParcelaAtual(dataVencimentoB);
+      DateTime vencimentoA =
+          calcularDataVencimento(dataVencimentoA, parcelaAtualA);
+      DateTime vencimentoB =
+          calcularDataVencimento(dataVencimentoB, parcelaAtualB);
 
-      // Contas vencidas primeiro, ordenadas pela data de vencimento (mais antigas primeiro)
-      if (dataVencimentoA.isBefore(now)) {
-        if (dataVencimentoB.isBefore(now)) {
-          return dataVencimentoA.compareTo(dataVencimentoB);
-        }
-        return -1;
-      }
-      if (dataVencimentoB.isBefore(now)) {
-        return 1;
-      }
-
-      // Contas não vencidas, ordenadas pela data de vencimento
-      return dataVencimentoA.compareTo(dataVencimentoB);
+      return vencimentoA.compareTo(vencimentoB);
     });
 
     String dataAtual = DateFormat('dd/MM/yyyy').format(now);
@@ -428,16 +416,17 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     itemCount: contasFiltradas.length,
                     itemBuilder: (context, index) {
                       final conta = contasFiltradas[index];
-                      DateTime? dataTermino = conta['dataTermino'];
-                      DateTime dataVencimento = dataTermino != null
-                          ? calcularDataVencimento(dataTermino)
-                          : DateTime.now();
-                      bool isVencido = dataVencimento.isBefore(now);
+                      DateTime? dataVencimento = conta['dataVencimento'];
+                      if (dataVencimento == null) return Container();
+                      int parcelaAtual = calcularParcelaAtual(dataVencimento);
+                      DateTime vencimentoAtual =
+                          calcularDataVencimento(dataVencimento, parcelaAtual);
+                      bool isVencido = vencimentoAtual.isBefore(now);
                       bool hasComprovante = conta['comprovante'];
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
-                        height: 120, // Definindo a altura do container
+                        height: 90, // Definindo a altura do container
                         decoration: BoxDecoration(
                           color: hasComprovante
                               ? Colors.green[100]
@@ -457,7 +446,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         child: ListTile(
                           title: Text(conta['descricao']),
                           subtitle: Text(
-                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'} - Vencimento: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
+                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoAtual)} - Parcela: ${parcelaAtual} de ${conta['quantidadeParcelas'] ?? '∞'}',
                           ),
                           trailing: Column(
                             mainAxisSize: MainAxisSize.min,

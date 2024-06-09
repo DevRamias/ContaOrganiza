@@ -50,12 +50,11 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
-                'dataInicio': conta['dataInicio'] != null
-                    ? (conta['dataInicio'] as Timestamp).toDate()
+                'dataVencimento': conta['dataVencimento'] != null
+                    ? (conta['dataVencimento'] as Timestamp).toDate()
                     : null,
-                'dataTermino': conta['dataTermino'] != null
-                    ? (conta['dataTermino'] as Timestamp).toDate()
-                    : null,
+                'quantidadeParcelas': conta['quantidadeParcelas'],
+                'contaFixa': conta['contaFixa'] ?? false,
               };
             }));
           });
@@ -74,12 +73,11 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
           return {
             'descricao': conta['descricao'],
             'diretorio': conta['diretorio'],
-            'dataInicio': conta['dataInicio'] != null
-                ? Timestamp.fromDate(conta['dataInicio'])
+            'dataVencimento': conta['dataVencimento'] != null
+                ? Timestamp.fromDate(conta['dataVencimento'])
                 : null,
-            'dataTermino': conta['dataTermino'] != null
-                ? Timestamp.fromDate(conta['dataTermino'])
-                : null,
+            'quantidadeParcelas': conta['quantidadeParcelas'],
+            'contaFixa': conta['contaFixa'],
           };
         }).toList(),
       });
@@ -109,8 +107,9 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
     final _descricaoController =
         TextEditingController(text: conta?['descricao']);
     String? _diretorioSelecionado = conta?['diretorio'];
-    DateTime? _dataInicioSelecionada = conta?['dataInicio'];
-    DateTime? _dataTerminoSelecionada = conta?['dataTermino'];
+    DateTime? _dataVencimentoSelecionada = conta?['dataVencimento'];
+    int? _quantidadeParcelas = conta?['quantidadeParcelas'];
+    bool _contaFixa = conta?['contaFixa'] ?? false;
 
     showDialog(
       context: context,
@@ -148,10 +147,10 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                       children: [
                         Expanded(
                           child: Text(
-                            _dataInicioSelecionada == null
-                                ? 'Selecione data de início'
+                            _dataVencimentoSelecionada == null
+                                ? 'Selecione data de vencimento'
                                 : DateFormat('dd/MM/yyyy')
-                                    .format(_dataInicioSelecionada!),
+                                    .format(_dataVencimentoSelecionada!),
                           ),
                         ),
                         ElevatedButton(
@@ -159,13 +158,13 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             DateTime? pickedDate = await showDatePicker(
                               context: context,
                               initialDate:
-                                  _dataInicioSelecionada ?? DateTime.now(),
+                                  _dataVencimentoSelecionada ?? DateTime.now(),
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2101),
                             );
                             if (pickedDate != null) {
                               setState(() {
-                                _dataInicioSelecionada = pickedDate;
+                                _dataVencimentoSelecionada = pickedDate;
                               });
                             }
                           },
@@ -174,7 +173,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                               Icon(Icons.calendar_today, size: 16),
                               SizedBox(width: 5),
                               Text(
-                                'Início',
+                                'Vencimento',
                                 style: TextStyle(fontSize: 12),
                               ),
                             ],
@@ -191,44 +190,31 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            _dataTerminoSelecionada == null
-                                ? 'Selecione data de término'
-                                : DateFormat('dd/MM/yyyy')
-                                    .format(_dataTerminoSelecionada!),
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: () async {
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate:
-                                  _dataTerminoSelecionada ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2101),
-                            );
-                            if (pickedDate != null) {
+                          child: TextField(
+                            decoration: const InputDecoration(
+                                labelText: 'Quantidade de Parcelas'),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
                               setState(() {
-                                _dataTerminoSelecionada = pickedDate;
+                                _quantidadeParcelas = int.tryParse(value);
                               });
-                            }
-                          },
-                          child: const Row(
-                            children: [
-                              Icon(Icons.calendar_today, size: 16),
-                              SizedBox(width: 5),
-                              Text(
-                                'Término',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            },
+                            enabled: !_contaFixa,
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        Checkbox(
+                          value: _contaFixa,
+                          onChanged: (value) {
+                            setState(() {
+                              _contaFixa = value ?? false;
+                              if (_contaFixa) {
+                                _quantidadeParcelas = null;
+                              }
+                            });
+                          },
+                        ),
+                        const Text('Conta Fixa'),
                       ],
                     ),
                   ],
@@ -245,21 +231,23 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   onPressed: () {
                     if (_descricaoController.text.isNotEmpty &&
                         _diretorioSelecionado != null &&
-                        _dataInicioSelecionada != null) {
+                        _dataVencimentoSelecionada != null) {
                       setState(() {
                         if (conta == null) {
                           _contas.add({
                             'descricao': _descricaoController.text,
                             'diretorio': _diretorioSelecionado!,
-                            'dataInicio': _dataInicioSelecionada!,
-                            'dataTermino': _dataTerminoSelecionada,
+                            'dataVencimento': _dataVencimentoSelecionada!,
+                            'quantidadeParcelas': _quantidadeParcelas,
+                            'contaFixa': _contaFixa,
                           });
                         } else {
                           _contas[index!] = {
                             'descricao': _descricaoController.text,
                             'diretorio': _diretorioSelecionado!,
-                            'dataInicio': _dataInicioSelecionada!,
-                            'dataTermino': _dataTerminoSelecionada,
+                            'dataVencimento': _dataVencimentoSelecionada!,
+                            'quantidadeParcelas': _quantidadeParcelas,
+                            'contaFixa': _contaFixa,
                           };
                         }
                         _saveContas();
@@ -358,7 +346,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'}'),
+                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'] ?? DateTime.now())} - Parcelas: ${conta['contaFixa'] ? 'Conta Fixa' : conta['quantidadeParcelas']}'),
                     trailing: PopupMenuButton<String>(
                       onSelected: (String value) {
                         if (value == 'Editar') {
