@@ -478,21 +478,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                                   ),
                                 ],
                               ),
-                              // PopupMenuButton<String>(
-                              //   onSelected: (String value) {
-                              //     if (value == 'desmarcar') {
-                              //       _desmarcarContaComoPaga(conta);
-                              //     }
-                              //   },
-                              //   itemBuilder: (BuildContext context) {
-                              //     return {'desmarcar'}.map((String choice) {
-                              //       return PopupMenuItem<String>(
-                              //         value: choice,
-                              //         child: Text(choice),
-                              //       );
-                              //     }).toList();
-                              //   },
-                              // ),
                             ],
                           ),
                         ),

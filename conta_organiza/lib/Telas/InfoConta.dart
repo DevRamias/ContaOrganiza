@@ -65,8 +65,7 @@ class _InfoContaState extends State<InfoConta> {
     }
   }
 
-  Future<void> pickFiles(
-      BuildContext context, String description, DateTime date) async {
+  Future<void> pickFiles(BuildContext context) async {
     if (_isUploading) return; // Evitar múltiplos uploads simultâneos
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -76,12 +75,11 @@ class _InfoContaState extends State<InfoConta> {
 
     if (result != null) {
       File pickedFile = File(result.files.single.path!);
-      await _uploadFile(context, pickedFile, description, date);
+      await showFileInfoDialog(context, pickedFile);
     }
   }
 
-  Future<void> pickImage(
-      BuildContext context, String description, DateTime date) async {
+  Future<void> pickImage(BuildContext context) async {
     if (_isUploading) return; // Evitar múltiplos uploads simultâneos
 
     final picker = ImagePicker();
@@ -89,7 +87,7 @@ class _InfoContaState extends State<InfoConta> {
 
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
-      await _uploadFile(context, imageFile, description, date);
+      await showFileInfoDialog(context, imageFile);
     }
   }
 
@@ -246,13 +244,13 @@ class _InfoContaState extends State<InfoConta> {
           IconButton(
             icon: const Icon(Icons.add_a_photo),
             onPressed: () async {
-              await pickImage(context, '', DateTime.now());
+              await pickImage(context);
             },
           ),
           IconButton(
             icon: const Icon(Icons.attach_file),
             onPressed: () async {
-              await pickFiles(context, '', DateTime.now());
+              await pickFiles(context);
             },
           ),
         ],
