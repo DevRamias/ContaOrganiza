@@ -102,6 +102,72 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
+  Future<void> _pickFiles(BuildContext context, String description,
+      DateTime date, String directoryId) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
+
+    if (result != null) {
+      File pickedFile = File(result.files.single.path!);
+      await _uploadFile(context, pickedFile, description, date, directoryId);
+    }
+  }
+
+  Future<void> _pickImage(BuildContext context, String description,
+      DateTime date, String directoryId) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
+      await _uploadFile(context, imageFile, description, date, directoryId);
+    }
+  }
+
+  Future<void> _uploadFile(BuildContext context, File file, String description,
+      DateTime date, String directoryId) async {
+    try {
+      String sanitizedDescription =
+          description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
+      final fileName =
+          '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+
+      // Upload do arquivo para o Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'users/${_currentUser!.uid}/directories/$directoryId/$fileName');
+      await storageRef.putFile(file);
+      final fileUrl = await storageRef.getDownloadURL();
+
+      // Salvar metadados no Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(directoryId)
+          .collection('files')
+          .add({
+        'description': sanitizedDescription,
+        'date': date,
+        'type': file.path.split('.').last,
+        'url': fileUrl,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Arquivo enviado com sucesso!'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao fazer upload do arquivo: $e'),
+        ),
+      );
+    }
+  }
+
   Future<void> _mostrarDialogoUpload(
       Map<String, dynamic> conta, bool isImage) async {
     final _descricaoController = TextEditingController();
@@ -153,12 +219,21 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         _diretorioSelecionado != null) {
                       Navigator.of(context).pop();
                       if (isImage) {
-                        await _pickImage(conta, _descricaoController.text,
-                            _diretorioSelecionado!);
+                        await _pickImage(
+                          context,
+                          _descricaoController.text,
+                          DateTime.now(),
+                          _diretorioSelecionado!,
+                        );
                       } else {
-                        await _uploadFile(conta, _descricaoController.text,
-                            _diretorioSelecionado!);
+                        await _pickFiles(
+                          context,
+                          _descricaoController.text,
+                          DateTime.now(),
+                          _diretorioSelecionado!,
+                        );
                       }
+                      await _saveContas();
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -175,80 +250,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         );
       },
     );
-  }
-
-  Future<void> _uploadFile(
-      Map<String, dynamic> conta, String descricao, String diretorio) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-
-    if (result != null) {
-      File file = File(result.files.single.path!);
-      await _saveFile(conta, file, descricao, diretorio);
-    }
-  }
-
-  Future<void> _pickImage(
-      Map<String, dynamic> conta, String descricao, String diretorio) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      await _saveFile(conta, imageFile, descricao, diretorio);
-    }
-  }
-
-  Future<void> _saveFile(Map<String, dynamic> conta, File file,
-      String descricao, String diretorio) async {
-    setState(() {
-      conta['comprovante'] = true;
-    });
-
-    try {
-      String fileExtension = file.path.split('.').last;
-      String fileName =
-          '${descricao}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.$fileExtension';
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('users/${_currentUser!.uid}/directories/$diretorio/$fileName');
-      await storageRef.putFile(file);
-      final fileUrl = await storageRef.getDownloadURL();
-
-      // Atualizar Firestore com o URL do comprovante
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .update({
-        'contas': _contas.map((c) {
-          if (c['descricao'] == conta['descricao'] &&
-              c['dataInicio'] == conta['dataInicio']) {
-            return {
-              'descricao': c['descricao'],
-              'diretorio': c['diretorio'],
-              'dataInicio': Timestamp.fromDate(c['dataInicio']),
-              'dataTermino': c['dataTermino'] != null
-                  ? Timestamp.fromDate(c['dataTermino'])
-                  : null,
-              'comprovante': true,
-              'comprovanteUrl': fileUrl,
-            };
-          }
-          return c;
-        }).toList(),
-      });
-    } catch (e) {
-      setState(() {
-        conta['comprovante'] = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao fazer upload do arquivo: $e'),
-        ),
-      );
-    }
   }
 
   Future<void> _desmarcarContaComoPaga(Map<String, dynamic> conta) async {

@@ -65,7 +65,8 @@ class _InfoContaState extends State<InfoConta> {
     }
   }
 
-  Future<void> _pickFiles() async {
+  Future<void> pickFiles(
+      BuildContext context, String description, DateTime date) async {
     if (_isUploading) return; // Evitar múltiplos uploads simultâneos
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -75,11 +76,12 @@ class _InfoContaState extends State<InfoConta> {
 
     if (result != null) {
       File pickedFile = File(result.files.single.path!);
-      await _showFileInfoDialog(pickedFile);
+      await _uploadFile(context, pickedFile, description, date);
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> pickImage(
+      BuildContext context, String description, DateTime date) async {
     if (_isUploading) return; // Evitar múltiplos uploads simultâneos
 
     final picker = ImagePicker();
@@ -87,11 +89,59 @@ class _InfoContaState extends State<InfoConta> {
 
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
-      await _showFileInfoDialog(imageFile);
+      await _uploadFile(context, imageFile, description, date);
     }
   }
 
-  Future<void> _showFileInfoDialog(File file) async {
+  Future<void> _uploadFile(BuildContext context, File file, String description,
+      DateTime date) async {
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      String sanitizedDescription =
+          description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
+      final fileName =
+          '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+
+      // Upload do arquivo para o Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'users/${_currentUser!.uid}/directories/${widget.directory.id}/$fileName');
+      await storageRef.putFile(file);
+      final fileUrl = await storageRef.getDownloadURL();
+
+      // Salvar metadados no Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(widget.directory.id)
+          .collection('files')
+          .add({
+        'description': sanitizedDescription,
+        'date': date,
+        'type': file.path.split('.').last,
+        'url': fileUrl,
+      });
+
+      // Carregue os arquivos novamente para atualizar a lista
+      await _loadFiles();
+    } catch (e) {
+      // Tratar erros de upload
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao fazer upload do arquivo: $e'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
+
+  Future<void> showFileInfoDialog(BuildContext context, File file) async {
     String description = '';
     DateTime date = DateTime.now();
 
@@ -157,7 +207,7 @@ class _InfoContaState extends State<InfoConta> {
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              await _uploadFile(file, description, date);
+              await _uploadFile(context, file, description, date);
             },
             child: const Text('Salvar'),
           ),
@@ -166,51 +216,171 @@ class _InfoContaState extends State<InfoConta> {
     );
   }
 
-  Future<void> _uploadFile(File file, String description, DateTime date) async {
-    setState(() {
-      _isUploading = true;
-    });
+  @override
+  Widget build(BuildContext context) {
+    Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
 
-    try {
-      String sanitizedDescription =
-          description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
-      final fileName =
-          '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+    for (var fileData in _files) {
+      final description = fileData['description'];
+      final date = fileData['date'];
+      final type = fileData['type'];
 
-      // Upload do arquivo para o Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref().child(
-          'users/${_currentUser!.uid}/directories/${widget.directory.id}/$fileName');
-      await storageRef.putFile(file);
-      final fileUrl = await storageRef.getDownloadURL();
+      String year = DateFormat('yyyy').format(date);
+      String month = DateFormat('MMMM', 'pt_BR').format(date);
 
-      // Salvar metadados no Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .collection('directories')
-          .doc(widget.directory.id)
-          .collection('files')
-          .add({
-        'description': sanitizedDescription,
-        'date': date,
-        'type': file.path.split('.').last,
-        'url': fileUrl,
-      });
+      if (!groupedFiles.containsKey(year)) {
+        groupedFiles[year] = {};
+      }
 
-      // Carregue os arquivos novamente para atualizar a lista
-      await _loadFiles();
-    } catch (e) {
-      // Tratar erros de upload
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao fazer upload do arquivo: $e'),
-        ),
-      );
-    } finally {
-      setState(() {
-        _isUploading = false;
-      });
+      if (!groupedFiles[year]!.containsKey(month)) {
+        groupedFiles[year]![month] = [];
+      }
+
+      groupedFiles[year]![month]!.add(fileData);
     }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.directory['name']),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_a_photo),
+            onPressed: () async {
+              await pickImage(context, '', DateTime.now());
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            onPressed: () async {
+              await pickFiles(context, '', DateTime.now());
+            },
+          ),
+        ],
+      ),
+      body: _isUploading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              children: groupedFiles.entries.map((yearEntry) {
+                String year = yearEntry.key;
+                Map<String, List<Map<String, dynamic>>> months =
+                    yearEntry.value;
+
+                return ExpansionTile(
+                  leading: Container(
+                    width: 4,
+                    color: Colors.grey,
+                  ),
+                  title: Text(year,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  children: months.entries.map((monthEntry) {
+                    String month = monthEntry.key;
+                    List<Map<String, dynamic>> files = monthEntry.value;
+
+                    return ExpansionTile(
+                      leading: Container(
+                        width: 4,
+                        color: Colors.grey,
+                      ),
+                      title: Text(month, style: const TextStyle(fontSize: 18)),
+                      children: files.map((fileData) {
+                        final description = fileData['description'];
+                        final date = fileData['date'];
+                        final type = fileData['type'];
+                        final url = fileData['url'];
+
+                        IconData iconData;
+                        if (type == 'pdf') {
+                          iconData = Icons.picture_as_pdf;
+                        } else if (type == 'jpg' ||
+                            type == 'jpeg' ||
+                            type == 'png') {
+                          iconData = Icons.image;
+                        } else {
+                          iconData = Icons.insert_drive_file;
+                        }
+
+                        return ListTile(
+                          leading: Icon(iconData),
+                          title: Text(description),
+                          subtitle: Text(
+                              'Vencimento: ${DateFormat('dd/MM/yyyy').format(date)}'),
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              switch (value) {
+                                case 'view':
+                                  if (type == 'pdf') {
+                                    _showPdfPreview(url);
+                                  } else if (type == 'jpg' ||
+                                      type == 'jpeg' ||
+                                      type == 'png') {
+                                    _showImagePreview(url);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Tipo de arquivo não suportado para visualização.'),
+                                      ),
+                                    );
+                                  }
+                                  break;
+                                case 'download':
+                                  await _openFileInBrowser(url);
+                                  break;
+                                case 'edit':
+                                  _editFileDetails(fileData);
+                                  break;
+                                case 'delete':
+                                  _deleteFile(fileData);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (BuildContext context) {
+                              return [
+                                const PopupMenuItem(
+                                  value: 'view',
+                                  child: Text('Visualizar'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'download',
+                                  child: Text('Download'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Editar'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Excluir'),
+                                ),
+                              ];
+                            },
+                          ),
+                          onTap: () {
+                            if (type == 'pdf') {
+                              _showPdfPreview(url);
+                            } else if (type == 'jpg' ||
+                                type == 'jpeg' ||
+                                type == 'png') {
+                              _showImagePreview(url);
+                            } else {
+                              _showPdfPreview(url);
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text(
+                              //         'Tipo de arquivo não suportado para visualização.'),
+                              //   ),
+                              // );
+                            }
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }).toList(),
+                );
+              }).toList(),
+            ),
+    );
   }
 
   Future<void> _deleteFile(Map<String, dynamic> fileData) async {
@@ -435,168 +605,5 @@ class _InfoContaState extends State<InfoConta> {
     } catch (e) {
       throw Exception('Erro ao baixar o PDF: $e');
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
-
-    for (var fileData in _files) {
-      final description = fileData['description'];
-      final date = fileData['date'];
-      final type = fileData['type'];
-
-      String year = DateFormat('yyyy').format(date);
-      String month = DateFormat('MMMM', 'pt_BR').format(date);
-
-      if (!groupedFiles.containsKey(year)) {
-        groupedFiles[year] = {};
-      }
-
-      if (!groupedFiles[year]!.containsKey(month)) {
-        groupedFiles[year]![month] = [];
-      }
-
-      groupedFiles[year]![month]!.add(fileData);
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.directory['name']),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_a_photo),
-            onPressed: _pickImage,
-          ),
-          IconButton(
-            icon: const Icon(Icons.attach_file),
-            onPressed: _pickFiles,
-          ),
-        ],
-      ),
-      body: _isUploading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              children: groupedFiles.entries.map((yearEntry) {
-                String year = yearEntry.key;
-                Map<String, List<Map<String, dynamic>>> months =
-                    yearEntry.value;
-
-                return ExpansionTile(
-                  leading: Container(
-                    width: 4,
-                    color: Colors.grey,
-                  ),
-                  title: Text(year,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold)),
-                  children: months.entries.map((monthEntry) {
-                    String month = monthEntry.key;
-                    List<Map<String, dynamic>> files = monthEntry.value;
-
-                    return ExpansionTile(
-                      leading: Container(
-                        width: 4,
-                        color: Colors.grey,
-                      ),
-                      title: Text(month, style: const TextStyle(fontSize: 18)),
-                      children: files.map((fileData) {
-                        final description = fileData['description'];
-                        final date = fileData['date'];
-                        final type = fileData['type'];
-                        final url = fileData['url'];
-
-                        IconData iconData;
-                        if (type == 'pdf') {
-                          iconData = Icons.picture_as_pdf;
-                        } else if (type == 'jpg' ||
-                            type == 'jpeg' ||
-                            type == 'png') {
-                          iconData = Icons.image;
-                        } else {
-                          iconData = Icons.insert_drive_file;
-                        }
-
-                        return ListTile(
-                          leading: Icon(iconData),
-                          title: Text(description),
-                          subtitle: Text(
-                              'Vencimento: ${DateFormat('dd/MM/yyyy').format(date)}'),
-                          trailing: PopupMenuButton<String>(
-                            onSelected: (value) async {
-                              switch (value) {
-                                case 'view':
-                                  if (type == 'pdf') {
-                                    _showPdfPreview(url);
-                                  } else if (type == 'jpg' ||
-                                      type == 'jpeg' ||
-                                      type == 'png') {
-                                    _showImagePreview(url);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Tipo de arquivo não suportado para visualização.'),
-                                      ),
-                                    );
-                                  }
-                                  break;
-                                case 'download':
-                                  await _openFileInBrowser(url);
-                                  break;
-                                case 'edit':
-                                  _editFileDetails(fileData);
-                                  break;
-                                case 'delete':
-                                  _deleteFile(fileData);
-                                  break;
-                              }
-                            },
-                            itemBuilder: (BuildContext context) {
-                              return [
-                                const PopupMenuItem(
-                                  value: 'view',
-                                  child: Text('Visualizar'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'download',
-                                  child: Text('Download'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Text('Editar'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Text('Excluir'),
-                                ),
-                              ];
-                            },
-                          ),
-                          onTap: () {
-                            if (type == 'pdf') {
-                              _showPdfPreview(url);
-                            } else if (type == 'jpg' ||
-                                type == 'jpeg' ||
-                                type == 'png') {
-                              _showImagePreview(url);
-                            } else {
-                              _showPdfPreview(url);
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(
-                              //     content: Text(
-                              //         'Tipo de arquivo não suportado para visualização.'),
-                              //   ),
-                              // );
-                            }
-                          },
-                        );
-                      }).toList(),
-                    );
-                  }).toList(),
-                );
-              }).toList(),
-            ),
-    );
   }
 }
