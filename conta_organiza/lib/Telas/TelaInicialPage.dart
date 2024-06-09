@@ -67,11 +67,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao carregar contas: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao carregar contas: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao carregar contas: $e');
         });
       }
     }
@@ -101,11 +97,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao carregar diretórios: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao carregar diretórios: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao carregar diretórios: $e');
         });
       }
     }
@@ -138,11 +130,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao salvar contas: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao salvar contas: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao salvar contas: $e');
         });
       }
     }
@@ -164,11 +152,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao selecionar arquivo: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao selecionar arquivo: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao selecionar arquivo: $e');
         });
       }
     }
@@ -188,11 +172,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao capturar imagem: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao capturar imagem: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao capturar imagem: $e');
         });
       }
     }
@@ -226,24 +206,30 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         'url': fileUrl,
       });
 
+      // Marcar a conta como paga
+      setState(() {
+        for (var conta in _contas) {
+          if (conta['descricao'] == description &&
+              conta['diretorio'] == directoryId) {
+            conta['comprovante'] = true;
+            conta['comprovanteUrl'] = fileUrl;
+            break;
+          }
+        }
+      });
+
+      await _saveContas();
+
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Arquivo enviado com sucesso!'),
-            ),
-          );
+          _showSnackBar('Arquivo enviado com sucesso!');
         });
       }
     } catch (e) {
       print('Erro ao fazer upload do arquivo: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao fazer upload do arquivo: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao fazer upload do arquivo: $e');
         });
       }
     }
@@ -318,12 +304,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     } else {
                       if (mounted) {
                         SchedulerBinding.instance.addPostFrameCallback((_) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Por favor, preencha todos os campos.'),
-                            ),
-                          );
+                          _showSnackBar('Por favor, preencha todos os campos.');
                         });
                       }
                     }
@@ -390,11 +371,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       } else {
         if (mounted) {
           SchedulerBinding.instance.addPostFrameCallback((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Diretório não encontrado.'),
-              ),
-            );
+            _showSnackBar('Diretório não encontrado.');
           });
         }
       }
@@ -402,13 +379,19 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       print('Erro ao navegar para o diretório: $e');
       if (mounted) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao navegar para o diretório: $e'),
-            ),
-          );
+          _showSnackBar('Erro ao navegar para o diretório: $e');
         });
       }
+    }
+  }
+
+  void _showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
     }
   }
 
@@ -416,9 +399,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      return !conta['comprovante'];
+      // Manter contas pagas se for o mês vigente
+      DateTime? dataTermino = conta['dataTermino'];
+      bool isCurrentMonth = dataTermino != null &&
+          dataTermino.month == now.month &&
+          dataTermino.year == now.year;
+      return !conta['comprovante'] || isCurrentMonth;
     }).toList();
 
+    // Ordenar da conta mais velha para a mais recente
     contasFiltradas
         .sort((a, b) => a['dataInicio']?.compareTo(b['dataInicio']) ?? 0);
 
@@ -456,6 +445,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       bool isVencido =
                           dataTermino != null && dataTermino.isBefore(now);
                       bool hasComprovante = conta['comprovante'];
+                      bool isCurrentMonth = dataTermino != null &&
+                          dataTermino.month == now.month &&
+                          dataTermino.year == now.year;
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 8),
