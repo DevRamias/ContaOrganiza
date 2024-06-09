@@ -135,8 +135,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _pickFiles(BuildContext context, String description,
-      DateTime date, String directoryId) async {
+  Future<void> _pickFiles(
+      BuildContext context, Map<String, dynamic> conta) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -145,7 +145,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
       if (result != null) {
         File pickedFile = File(result.files.single.path!);
-        await _uploadFile(context, pickedFile, description, date, directoryId);
+        await _uploadFile(context, pickedFile, conta);
       }
     } catch (e) {
       print('Erro ao selecionar arquivo: $e');
@@ -157,15 +157,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _pickImage(BuildContext context, String description,
-      DateTime date, String directoryId) async {
+  Future<void> _pickImage(
+      BuildContext context, Map<String, dynamic> conta) async {
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
       if (pickedFile != null) {
         File imageFile = File(pickedFile.path);
-        await _uploadFile(context, imageFile, description, date, directoryId);
+        await _uploadFile(context, imageFile, conta);
       }
     } catch (e) {
       print('Erro ao capturar imagem: $e');
@@ -177,9 +177,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _uploadFile(BuildContext context, File file, String description,
-      DateTime date, String directoryId) async {
+  Future<void> _uploadFile(
+      BuildContext context, File file, Map<String, dynamic> conta) async {
     try {
+      String description = conta['descricao'];
+      String directoryId = conta['diretorio'];
+      DateTime date = DateTime.now();
+
       String sanitizedDescription =
           description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
       final fileName =
@@ -207,14 +211,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
       // Marcar a conta como paga
       setState(() {
-        for (var conta in _contas) {
-          if (conta['descricao'] == description &&
-              conta['diretorio'] == directoryId) {
-            conta['comprovante'] = true;
-            conta['comprovanteUrl'] = fileUrl;
-            break;
-          }
-        }
+        conta['comprovante'] = true;
+        conta['comprovanteUrl'] = fileUrl;
       });
 
       await _saveContas();
@@ -284,20 +282,12 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     if (_descricaoController.text.isNotEmpty &&
                         _diretorioSelecionado != null) {
                       Navigator.of(context).pop();
+                      conta['descricao'] = _descricaoController.text;
+                      conta['diretorio'] = _diretorioSelecionado!;
                       if (isImage) {
-                        await _pickImage(
-                          context,
-                          _descricaoController.text,
-                          DateTime.now(),
-                          _diretorioSelecionado!,
-                        );
+                        await _pickImage(context, conta);
                       } else {
-                        await _pickFiles(
-                          context,
-                          _descricaoController.text,
-                          DateTime.now(),
-                          _diretorioSelecionado!,
-                        );
+                        await _pickFiles(context, conta);
                       }
                       await _saveContas();
                     } else {
@@ -358,63 +348,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
           content: Text(message),
         ),
       );
-    }
-  }
-
-  Future<void> _associarComprovanteAConta(
-      String fileUrl, String description) async {
-    // Mostrar um diálogo para selecionar a conta
-    String? contaSelecionada;
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Associar Comprovante a Conta'),
-          content: DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Conta'),
-            value: contaSelecionada,
-            items: _contas.map((conta) {
-              return DropdownMenuItem<String>(
-                value: conta['descricao'],
-                child: Text(conta['descricao']),
-              );
-            }).toList(),
-            onChanged: (newValue) {
-              setState(() {
-                contaSelecionada = newValue;
-              });
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Associar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (contaSelecionada != null) {
-      setState(() {
-        for (var conta in _contas) {
-          if (conta['descricao'] == contaSelecionada) {
-            conta['comprovante'] = true;
-            conta['comprovanteUrl'] = fileUrl;
-            break;
-          }
-        }
-      });
-
-      await _saveContas();
     }
   }
 
@@ -504,7 +437,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
-                        height: 100, // Definindo a altura do container
+                        height: 120, // Definindo a altura do container
                         decoration: BoxDecoration(
                           color: hasComprovante
                               ? Colors.green[100]
