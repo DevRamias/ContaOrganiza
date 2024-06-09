@@ -365,17 +365,42 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      // Manter contas pagas se for o mês vigente
+      // Filtrar contas do mês atual
+      DateTime? dataInicio = conta['dataInicio'];
       DateTime? dataTermino = conta['dataTermino'];
-      bool isCurrentMonth = dataTermino != null &&
-          dataTermino.month == now.month &&
-          dataTermino.year == now.year;
-      return !conta['comprovante'] || isCurrentMonth;
+      bool isCurrentMonth = (dataInicio != null &&
+              dataInicio.month == now.month &&
+              dataInicio.year == now.year) ||
+          (dataTermino != null &&
+              dataTermino.month == now.month &&
+              dataTermino.year == now.year);
+      return isCurrentMonth;
     }).toList();
 
-    // Ordenar da conta mais velha para a mais recente
-    contasFiltradas
-        .sort((a, b) => a['dataInicio']?.compareTo(b['dataInicio']) ?? 0);
+    // Ordenar contas
+    contasFiltradas.sort((a, b) {
+      DateTime? dataTerminoA = a['dataTermino'];
+      DateTime? dataTerminoB = b['dataTermino'];
+      DateTime? dataInicioA = a['dataInicio'];
+      DateTime? dataInicioB = b['dataInicio'];
+
+      // Contas vencidas primeiro, ordenadas pela data de término (mais antigas primeiro)
+      if (dataTerminoA != null && dataTerminoA.isBefore(now)) {
+        if (dataTerminoB != null && dataTerminoB.isBefore(now)) {
+          return dataTerminoA.compareTo(dataTerminoB);
+        }
+        return -1;
+      }
+      if (dataTerminoB != null && dataTerminoB.isBefore(now)) {
+        return 1;
+      }
+
+      // Contas não vencidas, ordenadas pela data de início
+      if (dataInicioA != null && dataInicioB != null) {
+        return dataInicioA.compareTo(dataInicioB);
+      }
+      return 0;
+    });
 
     String dataAtual = DateFormat('dd/MM/yyyy').format(now);
 
@@ -408,9 +433,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       bool isVencido =
                           dataTermino != null && dataTermino.isBefore(now);
                       bool hasComprovante = conta['comprovante'];
-                      bool isCurrentMonth = dataTermino != null &&
-                          dataTermino.month == now.month &&
-                          dataTermino.year == now.year;
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -444,13 +466,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                                 children: [
                                   IconButton(
                                     icon:
-                                        const Icon(Icons.attach_file, size: 22),
+                                        const Icon(Icons.attach_file, size: 24),
                                     onPressed: () =>
                                         _mostrarDialogoUpload(conta, false),
                                   ),
                                   IconButton(
                                     icon:
-                                        const Icon(Icons.camera_alt, size: 22),
+                                        const Icon(Icons.camera_alt, size: 24),
                                     onPressed: () =>
                                         _mostrarDialogoUpload(conta, true),
                                   ),
