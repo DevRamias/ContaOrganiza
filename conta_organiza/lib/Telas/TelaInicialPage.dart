@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'InfoConta.dart';
+import 'package:flutter/scheduler.dart';
 
 class TelaInicialPage extends StatefulWidget {
   const TelaInicialPage({super.key});
@@ -16,6 +17,7 @@ class TelaInicialPage extends StatefulWidget {
 }
 
 class _TelaInicialPageState extends State<TelaInicialPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, dynamic>> _contas = [];
   List<String> _diretorios = [];
   Map<String, String> _diretoriosMap = {};
@@ -29,100 +31,170 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   }
 
   Future<void> _loadContas() async {
-    _currentUser = FirebaseAuth.instance.currentUser;
-    if (_currentUser != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .get();
-      if (userDoc.exists) {
-        Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
-        if (data != null && data.containsKey('contas')) {
-          setState(() {
-            _contas =
-                List<Map<String, dynamic>>.from(data['contas'].map((conta) {
-              return {
-                'descricao': conta['descricao'],
-                'diretorio': conta['diretorio'],
-                'dataInicio': conta['dataInicio'] != null
-                    ? (conta['dataInicio'] as Timestamp).toDate()
-                    : null,
-                'dataTermino': conta['dataTermino'] != null
-                    ? (conta['dataTermino'] as Timestamp).toDate()
-                    : null,
-                'comprovante': conta['comprovante'] ?? false,
-                'comprovanteUrl': conta['comprovanteUrl'] ?? '',
-              };
-            }));
-          });
+    try {
+      _currentUser = FirebaseAuth.instance.currentUser;
+      if (_currentUser != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .get();
+        if (userDoc.exists) {
+          Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+          if (data != null && data.containsKey('contas')) {
+            if (mounted) {
+              setState(() {
+                _contas =
+                    List<Map<String, dynamic>>.from(data['contas'].map((conta) {
+                  return {
+                    'descricao': conta['descricao'],
+                    'diretorio': conta['diretorio'],
+                    'dataInicio': conta['dataInicio'] != null
+                        ? (conta['dataInicio'] as Timestamp).toDate()
+                        : null,
+                    'dataTermino': conta['dataTermino'] != null
+                        ? (conta['dataTermino'] as Timestamp).toDate()
+                        : null,
+                    'comprovante': conta['comprovante'] ?? false,
+                    'comprovanteUrl': conta['comprovanteUrl'] ?? '',
+                  };
+                }));
+              });
+            }
+          }
         }
+      }
+    } catch (e) {
+      print('Erro ao carregar contas: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao carregar contas: $e'),
+            ),
+          );
+        });
       }
     }
   }
 
   Future<void> _loadDirectories() async {
-    _currentUser = FirebaseAuth.instance.currentUser;
-    if (_currentUser != null) {
-      QuerySnapshot directoriesSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .collection('directories')
-          .get();
-      setState(() {
-        _diretorios = directoriesSnapshot.docs.map((doc) => doc.id).toList();
-        _diretoriosMap = {
-          for (var doc in directoriesSnapshot.docs)
-            doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
-        };
-      });
+    try {
+      _currentUser = FirebaseAuth.instance.currentUser;
+      if (_currentUser != null) {
+        QuerySnapshot directoriesSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .collection('directories')
+            .get();
+        if (mounted) {
+          setState(() {
+            _diretorios =
+                directoriesSnapshot.docs.map((doc) => doc.id).toList();
+            _diretoriosMap = {
+              for (var doc in directoriesSnapshot.docs)
+                doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
+            };
+          });
+        }
+      }
+    } catch (e) {
+      print('Erro ao carregar diretórios: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao carregar diretórios: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
   Future<void> _saveContas() async {
-    if (_currentUser != null) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .update({
-        'contas': _contas.map((conta) {
-          return {
-            'descricao': conta['descricao'],
-            'diretorio': conta['diretorio'],
-            'dataInicio': conta['dataInicio'] != null
-                ? Timestamp.fromDate(conta['dataInicio'])
-                : null,
-            'dataTermino': conta['dataTermino'] != null
-                ? Timestamp.fromDate(conta['dataTermino'])
-                : null,
-            'comprovante': conta['comprovante'],
-            'comprovanteUrl': conta['comprovanteUrl'],
-          };
-        }).toList(),
-      });
+    try {
+      if (_currentUser != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_currentUser!.uid)
+            .update({
+          'contas': _contas.map((conta) {
+            return {
+              'descricao': conta['descricao'],
+              'diretorio': conta['diretorio'],
+              'dataInicio': conta['dataInicio'] != null
+                  ? Timestamp.fromDate(conta['dataInicio'])
+                  : null,
+              'dataTermino': conta['dataTermino'] != null
+                  ? Timestamp.fromDate(conta['dataTermino'])
+                  : null,
+              'comprovante': conta['comprovante'],
+              'comprovanteUrl': conta['comprovanteUrl'],
+            };
+          }).toList(),
+        });
+      }
+    } catch (e) {
+      print('Erro ao salvar contas: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao salvar contas: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
   Future<void> _pickFiles(BuildContext context, String description,
       DateTime date, String directoryId) async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      );
 
-    if (result != null) {
-      File pickedFile = File(result.files.single.path!);
-      await _uploadFile(context, pickedFile, description, date, directoryId);
+      if (result != null) {
+        File pickedFile = File(result.files.single.path!);
+        await _uploadFile(context, pickedFile, description, date, directoryId);
+      }
+    } catch (e) {
+      print('Erro ao selecionar arquivo: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao selecionar arquivo: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
   Future<void> _pickImage(BuildContext context, String description,
       DateTime date, String directoryId) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      await _uploadFile(context, imageFile, description, date, directoryId);
+      if (pickedFile != null) {
+        File imageFile = File(pickedFile.path);
+        await _uploadFile(context, imageFile, description, date, directoryId);
+      }
+    } catch (e) {
+      print('Erro ao capturar imagem: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao capturar imagem: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
@@ -154,17 +226,26 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         'url': fileUrl,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Arquivo enviado com sucesso!'),
-        ),
-      );
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Arquivo enviado com sucesso!'),
+            ),
+          );
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao fazer upload do arquivo: $e'),
-        ),
-      );
+      print('Erro ao fazer upload do arquivo: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao fazer upload do arquivo: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
@@ -235,11 +316,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       }
                       await _saveContas();
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Por favor, preencha todos os campos.'),
-                        ),
-                      );
+                      if (mounted) {
+                        SchedulerBinding.instance.addPostFrameCallback((_) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Por favor, preencha todos os campos.'),
+                            ),
+                          );
+                        });
+                      }
                     }
                   },
                   child: const Text('Adicionar'),
@@ -286,26 +372,43 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   }
 
   Future<void> _navigateToDirectory(String directoryId) async {
-    DocumentSnapshot directorySnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_currentUser!.uid)
-        .collection('directories')
-        .doc(directoryId)
-        .get();
+    try {
+      DocumentSnapshot directorySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .doc(directoryId)
+          .get();
 
-    if (directorySnapshot.exists) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => InfoConta(directory: directorySnapshot),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Diretório não encontrado.'),
-        ),
-      );
+      if (directorySnapshot.exists) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InfoConta(directory: directorySnapshot),
+          ),
+        );
+      } else {
+        if (mounted) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Diretório não encontrado.'),
+              ),
+            );
+          });
+        }
+      }
+    } catch (e) {
+      print('Erro ao navegar para o diretório: $e');
+      if (mounted) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao navegar para o diretório: $e'),
+            ),
+          );
+        });
+      }
     }
   }
 
@@ -322,6 +425,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     String dataAtual = DateFormat('dd/MM/yyyy').format(now);
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Tela Inicial'),
       ),
