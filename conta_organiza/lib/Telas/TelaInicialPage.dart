@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'InfoConta.dart';
 import 'package:flutter/scheduler.dart';
 
 class TelaInicialPage extends StatefulWidget {
@@ -352,39 +351,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _navigateToDirectory(String directoryId) async {
-    try {
-      DocumentSnapshot directorySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .collection('directories')
-          .doc(directoryId)
-          .get();
-
-      if (directorySnapshot.exists) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => InfoConta(directory: directorySnapshot),
-          ),
-        );
-      } else {
-        if (mounted) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _showSnackBar('Diretório não encontrado.');
-          });
-        }
-      }
-    } catch (e) {
-      print('Erro ao navegar para o diretório: $e');
-      if (mounted) {
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          _showSnackBar('Erro ao navegar para o diretório: $e');
-        });
-      }
-    }
-  }
-
   void _showSnackBar(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -415,11 +381,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Tela Inicial'),
-      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(5.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -430,13 +393,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 5),
             Expanded(
               child: Card(
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
+                elevation: 5,
+                margin: const EdgeInsets.symmetric(vertical: 2),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(2.0),
                   child: ListView.builder(
                     itemCount: contasFiltradas.length,
                     itemBuilder: (context, index) {
@@ -450,7 +413,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           dataTermino.year == now.year;
 
                       return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        height: 90, // Definindo a altura do container
                         decoration: BoxDecoration(
                           color: hasComprovante
                               ? Colors.green[100]
@@ -472,39 +436,41 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           subtitle: Text(
                             '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'}',
                           ),
-                          trailing: Row(
+                          trailing: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.attach_file),
-                                onPressed: () =>
-                                    _mostrarDialogoUpload(conta, false),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon:
+                                        const Icon(Icons.attach_file, size: 22),
+                                    onPressed: () =>
+                                        _mostrarDialogoUpload(conta, false),
+                                  ),
+                                  IconButton(
+                                    icon:
+                                        const Icon(Icons.camera_alt, size: 22),
+                                    onPressed: () =>
+                                        _mostrarDialogoUpload(conta, true),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.camera_alt),
-                                onPressed: () =>
-                                    _mostrarDialogoUpload(conta, true),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.folder_open),
-                                onPressed: () =>
-                                    _navigateToDirectory(conta['diretorio']),
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (String value) {
-                                  if (value == 'desmarcar') {
-                                    _desmarcarContaComoPaga(conta);
-                                  }
-                                },
-                                itemBuilder: (BuildContext context) {
-                                  return {'desmarcar'}.map((String choice) {
-                                    return PopupMenuItem<String>(
-                                      value: choice,
-                                      child: Text(choice),
-                                    );
-                                  }).toList();
-                                },
-                              ),
+                              // PopupMenuButton<String>(
+                              //   onSelected: (String value) {
+                              //     if (value == 'desmarcar') {
+                              //       _desmarcarContaComoPaga(conta);
+                              //     }
+                              //   },
+                              //   itemBuilder: (BuildContext context) {
+                              //     return {'desmarcar'}.map((String choice) {
+                              //       return PopupMenuItem<String>(
+                              //         value: choice,
+                              //         child: Text(choice),
+                              //       );
+                              //     }).toList();
+                              //   },
+                              // ),
                             ],
                           ),
                         ),
