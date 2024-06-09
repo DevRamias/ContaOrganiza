@@ -55,6 +55,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     'pago': conta['pago'] ?? false,
                     'comprovante': conta['comprovante'] ?? false,
                     'comprovanteUrl': conta['comprovanteUrl'] ?? '',
+                    'parcelasPagas': conta['parcelasPagas'] ?? 0, // Novo campo
                   };
                 }));
               });
@@ -121,6 +122,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
               'pago': conta['pago'],
               'comprovante': conta['comprovante'],
               'comprovanteUrl': conta['comprovanteUrl'],
+              'parcelasPagas': conta['parcelasPagas'], // Novo campo
             };
           }).toList(),
         });
@@ -210,10 +212,11 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         'url': fileUrl,
       });
 
-      // Marcar a conta como paga
+      // Marcar a conta como paga e incrementar parcelas pagas
       setState(() {
         conta['comprovante'] = true;
         conta['comprovanteUrl'] = fileUrl;
+        conta['parcelasPagas'] = (conta['parcelasPagas'] ?? 0) + 1;
       });
 
       await _saveContas();
@@ -344,6 +347,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       setState(() {
         conta['comprovante'] = false;
         conta['comprovanteUrl'] = '';
+        conta['parcelasPagas'] = (conta['parcelasPagas'] ?? 1) - 1;
       });
       await _saveContas();
     }
@@ -459,7 +463,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         child: ListTile(
                           title: Text(conta['descricao']),
                           subtitle: Text(
-                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoAtual)} - Parcela: ${parcelaAtual} de ${conta['quantidadeParcelas'] ?? '∞'}',
+                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoAtual)} - Parcela: ${parcelaAtual} de ${conta['quantidadeParcelas'] ?? '∞'} - Parcelas Pagas: ${conta['parcelasPagas']}',
                           ),
                           trailing: Column(
                             mainAxisSize: MainAxisSize.min,

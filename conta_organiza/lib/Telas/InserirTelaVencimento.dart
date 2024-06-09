@@ -56,6 +56,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
                 'pago': conta['pago'] ?? false,
+                'parcelasPagas': conta['parcelasPagas'] ?? 0, // Novo campo
               };
             }));
           });
@@ -80,6 +81,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
             'quantidadeParcelas': conta['quantidadeParcelas'],
             'contaFixa': conta['contaFixa'],
             'pago': conta['pago'],
+            'parcelasPagas': conta['parcelasPagas'], // Novo campo
           };
         }).toList(),
       });
@@ -243,6 +245,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
                             'pago': false,
+                            'parcelasPagas': 0, // Novo campo
                           });
                         } else {
                           _contas[index!] = {
@@ -252,6 +255,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
                             'pago': conta['pago'],
+                            'parcelasPagas':
+                                conta['parcelasPagas'], // Novo campo
                           };
                         }
                         _saveContas();
@@ -350,7 +355,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'] ?? DateTime.now())} - Parcelas: ${conta['contaFixa'] ? 'Conta Fixa' : conta['quantidadeParcelas']}'),
+                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'] ?? DateTime.now())} - Parcelas Pagas: ${conta['parcelasPagas']} de ${conta['contaFixa'] ? '∞' : conta['quantidadeParcelas']}'),
                     trailing: PopupMenuButton<String>(
                       onSelected: (String value) {
                         if (value == 'Editar') {
