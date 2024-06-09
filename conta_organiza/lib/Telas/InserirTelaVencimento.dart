@@ -55,6 +55,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                     : null,
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
+                'pago': conta['pago'] ?? false,
               };
             }));
           });
@@ -78,6 +79,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 : null,
             'quantidadeParcelas': conta['quantidadeParcelas'],
             'contaFixa': conta['contaFixa'],
+            'pago': conta['pago'],
           };
         }).toList(),
       });
@@ -240,6 +242,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'dataVencimento': _dataVencimentoSelecionada!,
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
+                            'pago': false,
                           });
                         } else {
                           _contas[index!] = {
@@ -248,6 +251,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'dataVencimento': _dataVencimentoSelecionada!,
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
+                            'pago': conta['pago'],
                           };
                         }
                         _saveContas();

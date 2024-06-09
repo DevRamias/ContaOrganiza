@@ -52,6 +52,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         : null,
                     'quantidadeParcelas': conta['quantidadeParcelas'],
                     'contaFixa': conta['contaFixa'] ?? false,
+                    'pago': conta['pago'] ?? false,
                     'comprovante': conta['comprovante'] ?? false,
                     'comprovanteUrl': conta['comprovanteUrl'] ?? '',
                   };
@@ -83,7 +84,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         if (mounted) {
           setState(() {
             _diretorios =
-                directoriesSnapshot.docs.map((doc) => doc.id).toList();
+                directoriesSnapshot.docs.map((doc) => doc.id).toSet().toList();
             _diretoriosMap = {
               for (var doc in directoriesSnapshot.docs)
                 doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
@@ -117,6 +118,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                   : null,
               'quantidadeParcelas': conta['quantidadeParcelas'],
               'contaFixa': conta['contaFixa'],
+              'pago': conta['pago'],
               'comprovante': conta['comprovante'],
               'comprovanteUrl': conta['comprovanteUrl'],
             };
@@ -181,11 +183,12 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       String description = conta['descricao'];
       String directoryId = conta['diretorio'];
       DateTime date = DateTime.now();
+      int parcelaAtual = calcularParcelaAtual(conta['dataVencimento']);
 
       String sanitizedDescription =
           description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
       final fileName =
-          '${sanitizedDescription}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+          '${sanitizedDescription}_Parcela_$parcelaAtual${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
 
       // Upload do arquivo para o Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child(
@@ -232,8 +235,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
   Future<void> _mostrarDialogoUpload(
       Map<String, dynamic> conta, bool isImage) async {
-    final _descricaoController = TextEditingController();
-    String? _diretorioSelecionado;
+    final _descricaoController = TextEditingController(
+      text:
+          '${conta['descricao']} - Parcela ${calcularParcelaAtual(conta['dataVencimento'])}',
+    );
+    String? _diretorioSelecionado = conta['diretorio'];
+
+    // Verifique se o diretório selecionado está na lista de diretórios
+    if (!_diretorios.contains(_diretorioSelecionado)) {
+      _diretorioSelecionado = null;
+    }
 
     showDialog(
       context: context,
@@ -249,6 +260,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     controller: _descricaoController,
                     decoration: const InputDecoration(
                         labelText: 'Descrição do Arquivo'),
+                    readOnly: true,
                   ),
                   const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
@@ -277,10 +289,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    if (_descricaoController.text.isNotEmpty &&
-                        _diretorioSelecionado != null) {
+                    if (_diretorioSelecionado != null) {
                       Navigator.of(context).pop();
-                      conta['descricao'] = _descricaoController.text;
                       conta['diretorio'] = _diretorioSelecionado!;
                       if (isImage) {
                         await _pickImage(context, conta);
@@ -371,6 +381,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       int parcelaAtual = calcularParcelaAtual(dataVencimento);
       bool isCurrentMonth = parcelaAtual > 0 &&
           parcelaAtual <= (conta['quantidadeParcelas'] ?? parcelaAtual);
+      if (isCurrentMonth && conta['comprovante']) {
+        conta['comprovante'] = false; // Marcar como não paga se for um novo mês
+      }
       return isCurrentMonth || !conta['comprovante'];
     }).toList();
 
