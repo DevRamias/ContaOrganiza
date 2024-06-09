@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Conta Organiza',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -44,11 +45,11 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => AuthWrapper(),
-        '/inicio': (context) => TelaInicial(),
+        '/inicio': (context) => const TelaInicial(),
         '/login': (context) => Login(),
-        '/cadastrar': (context) => CadastrarUsuario(),
-        '/lista-contas': (context) => ListaContas(),
-        '/verificar-email': (context) => VerificaEmail(
+        '/cadastrar': (context) => const CadastrarUsuario(),
+        '/lista-contas': (context) => const ListaContas(),
+        '/verificar-email': (context) => const VerificaEmail(
             email: ''), // Adicione a rota para a tela de verificação de e-mail
       },
     );
@@ -62,17 +63,17 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasData) {
           User? user = snapshot.data;
           if (user != null && user.emailVerified) {
-            return ListaContas();
+            return const ListaContas();
           } else {
             return VerificaEmail(email: user?.email ?? '');
           }
         }
-        return TelaInicial();
+        return const TelaInicial();
       },
     );
   }
