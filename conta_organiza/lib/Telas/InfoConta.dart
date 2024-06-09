@@ -214,6 +214,86 @@ class _InfoContaState extends State<InfoConta> {
     );
   }
 
+  Future<void> _associarComprovanteAConta(
+      BuildContext context, String fileUrl, String description) async {
+    // Mostrar um diálogo para selecionar a conta
+    String? contaSelecionada;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Associar Comprovante a Conta'),
+          content: FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('users')
+                .doc(_currentUser!.uid)
+                .get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Erro ao carregar contas'));
+                }
+                List<Map<String, dynamic>> contas = [];
+                if (snapshot.hasData && snapshot.data!.exists) {
+                  Map<String, dynamic>? data =
+                      snapshot.data!.data() as Map<String, dynamic>?;
+                  if (data != null && data.containsKey('contas')) {
+                    contas = List<Map<String, dynamic>>.from(data['contas']);
+                  }
+                }
+                return DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(labelText: 'Conta'),
+                  value: contaSelecionada,
+                  items: contas.map((conta) {
+                    return DropdownMenuItem<String>(
+                      value: conta['descricao'],
+                      child: Text(conta['descricao']),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    setState(() {
+                      contaSelecionada = newValue;
+                    });
+                  },
+                );
+              } else {
+                return const Center(child: CircularProgressIndicator());
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (contaSelecionada != null) {
+                  Navigator.of(context).pop();
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(_currentUser!.uid)
+                      .update({
+                    'contas': FieldValue.arrayUnion([
+                      {
+                        'descricao': contaSelecionada,
+                        'comprovante': true,
+                        'comprovanteUrl': fileUrl,
+                      }
+                    ])
+                  });
+                }
+              },
+              child: const Text('Associar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Map<String, Map<String, List<Map<String, dynamic>>>> groupedFiles = {};
@@ -331,6 +411,10 @@ class _InfoContaState extends State<InfoConta> {
                                 case 'delete':
                                   _deleteFile(fileData);
                                   break;
+                                case 'associate':
+                                  await _associarComprovanteAConta(
+                                      context, url, description);
+                                  break;
                               }
                             },
                             itemBuilder: (BuildContext context) {
@@ -350,6 +434,10 @@ class _InfoContaState extends State<InfoConta> {
                                 const PopupMenuItem(
                                   value: 'delete',
                                   child: Text('Excluir'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'associate',
+                                  child: Text('Associar a Conta'),
                                 ),
                               ];
                             },

@@ -361,45 +361,111 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
+  Future<void> _associarComprovanteAConta(
+      String fileUrl, String description) async {
+    // Mostrar um diálogo para selecionar a conta
+    String? contaSelecionada;
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Associar Comprovante a Conta'),
+          content: DropdownButtonFormField<String>(
+            decoration: const InputDecoration(labelText: 'Conta'),
+            value: contaSelecionada,
+            items: _contas.map((conta) {
+              return DropdownMenuItem<String>(
+                value: conta['descricao'],
+                child: Text(conta['descricao']),
+              );
+            }).toList(),
+            onChanged: (newValue) {
+              setState(() {
+                contaSelecionada = newValue;
+              });
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Associar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (contaSelecionada != null) {
+      setState(() {
+        for (var conta in _contas) {
+          if (conta['descricao'] == contaSelecionada) {
+            conta['comprovante'] = true;
+            conta['comprovanteUrl'] = fileUrl;
+            break;
+          }
+        }
+      });
+
+      await _saveContas();
+    }
+  }
+
+  DateTime calcularDataVencimento(DateTime dataTermino) {
+    DateTime now = DateTime.now();
+    int year = now.year;
+    int month = now.month;
+    int day = dataTermino.day;
+
+    // Ajusta automaticamente o dia se for inválido para o mês atual
+    return DateTime(year, month, day);
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      // Filtrar contas do mês atual
-      DateTime? dataInicio = conta['dataInicio'];
+      // Filtrar contas do mês atual ou contas não pagas
       DateTime? dataTermino = conta['dataTermino'];
-      bool isCurrentMonth = (dataInicio != null &&
-              dataInicio.month == now.month &&
-              dataInicio.year == now.year) ||
-          (dataTermino != null &&
-              dataTermino.month == now.month &&
-              dataTermino.year == now.year);
-      return isCurrentMonth;
+      DateTime dataVencimento = dataTermino != null
+          ? calcularDataVencimento(dataTermino)
+          : DateTime.now();
+      bool isCurrentMonth =
+          dataVencimento.month == now.month && dataVencimento.year == now.year;
+      return isCurrentMonth || !conta['comprovante'];
     }).toList();
 
     // Ordenar contas
     contasFiltradas.sort((a, b) {
       DateTime? dataTerminoA = a['dataTermino'];
       DateTime? dataTerminoB = b['dataTermino'];
-      DateTime? dataInicioA = a['dataInicio'];
-      DateTime? dataInicioB = b['dataInicio'];
+      DateTime dataVencimentoA = dataTerminoA != null
+          ? calcularDataVencimento(dataTerminoA)
+          : DateTime.now();
+      DateTime dataVencimentoB = dataTerminoB != null
+          ? calcularDataVencimento(dataTerminoB)
+          : DateTime.now();
 
-      // Contas vencidas primeiro, ordenadas pela data de término (mais antigas primeiro)
-      if (dataTerminoA != null && dataTerminoA.isBefore(now)) {
-        if (dataTerminoB != null && dataTerminoB.isBefore(now)) {
-          return dataTerminoA.compareTo(dataTerminoB);
+      // Contas vencidas primeiro, ordenadas pela data de vencimento (mais antigas primeiro)
+      if (dataVencimentoA.isBefore(now)) {
+        if (dataVencimentoB.isBefore(now)) {
+          return dataVencimentoA.compareTo(dataVencimentoB);
         }
         return -1;
       }
-      if (dataTerminoB != null && dataTerminoB.isBefore(now)) {
+      if (dataVencimentoB.isBefore(now)) {
         return 1;
       }
 
-      // Contas não vencidas, ordenadas pela data de início
-      if (dataInicioA != null && dataInicioB != null) {
-        return dataInicioA.compareTo(dataInicioB);
-      }
-      return 0;
+      // Contas não vencidas, ordenadas pela data de vencimento
+      return dataVencimentoA.compareTo(dataVencimentoB);
     });
 
     String dataAtual = DateFormat('dd/MM/yyyy').format(now);
@@ -430,13 +496,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     itemBuilder: (context, index) {
                       final conta = contasFiltradas[index];
                       DateTime? dataTermino = conta['dataTermino'];
-                      bool isVencido =
-                          dataTermino != null && dataTermino.isBefore(now);
+                      DateTime dataVencimento = dataTermino != null
+                          ? calcularDataVencimento(dataTermino)
+                          : DateTime.now();
+                      bool isVencido = dataVencimento.isBefore(now);
                       bool hasComprovante = conta['comprovante'];
 
                       return Container(
                         margin: const EdgeInsets.symmetric(vertical: 6),
-                        height: 90, // Definindo a altura do container
+                        height: 100, // Definindo a altura do container
                         decoration: BoxDecoration(
                           color: hasComprovante
                               ? Colors.green[100]
@@ -456,7 +524,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         child: ListTile(
                           title: Text(conta['descricao']),
                           subtitle: Text(
-                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'}',
+                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Início: ${DateFormat('dd/MM/yyyy').format(conta['dataInicio'] ?? DateTime.now())} - Término: ${conta['dataTermino'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataTermino']!) : 'N/A'} - Vencimento: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
                           ),
                           trailing: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -478,6 +546,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                                   ),
                                 ],
                               ),
+                              if (hasComprovante)
+                                IconButton(
+                                  icon:
+                                      const Icon(Icons.remove_circle, size: 24),
+                                  onPressed: () =>
+                                      _desmarcarContaComoPaga(conta),
+                                ),
                             ],
                           ),
                         ),
