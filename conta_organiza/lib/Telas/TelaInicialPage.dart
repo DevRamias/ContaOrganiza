@@ -44,6 +44,19 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
               setState(() {
                 _contas =
                     List<Map<String, dynamic>>.from(data['contas'].map((conta) {
+                  List<Map<String, dynamic>> parcelas = [];
+                  if (conta.containsKey('parcelas')) {
+                    parcelas =
+                        List<Map<String, dynamic>>.from(conta['parcelas']);
+                  } else {
+                    int quantidadeParcelas = conta['quantidadeParcelas'] ?? 1;
+                    for (int i = 0; i < quantidadeParcelas; i++) {
+                      parcelas.add({
+                        'comprovante': false,
+                        'comprovanteUrl': '',
+                      });
+                    }
+                  }
                   return {
                     'descricao': conta['descricao'],
                     'diretorio': conta['diretorio'],
@@ -52,10 +65,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         : null,
                     'quantidadeParcelas': conta['quantidadeParcelas'],
                     'contaFixa': conta['contaFixa'] ?? false,
-                    'pago': conta['pago'] ?? false,
-                    'comprovante': conta['comprovante'] ?? false,
-                    'comprovanteUrl': conta['comprovanteUrl'] ?? '',
-                    'parcelasPagas': conta['parcelasPagas'] ?? 0, // Novo campo
+                    'parcelas': parcelas,
                   };
                 }));
               });
@@ -119,10 +129,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                   : null,
               'quantidadeParcelas': conta['quantidadeParcelas'],
               'contaFixa': conta['contaFixa'],
-              'pago': conta['pago'],
-              'comprovante': conta['comprovante'],
-              'comprovanteUrl': conta['comprovanteUrl'],
-              'parcelasPagas': conta['parcelasPagas'], // Novo campo
+              'parcelas': conta['parcelas'],
             };
           }).toList(),
         });
@@ -137,8 +144,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _pickFiles(
-      BuildContext context, Map<String, dynamic> conta) async {
+  Future<void> _pickFiles(BuildContext context, Map<String, dynamic> conta,
+      int parcelaIndex) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -147,7 +154,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
       if (result != null) {
         File pickedFile = File(result.files.single.path!);
-        await _uploadFile(context, pickedFile, conta);
+        await _uploadFile(context, pickedFile, conta, parcelaIndex);
       }
     } catch (e) {
       print('Erro ao selecionar arquivo: $e');
@@ -159,15 +166,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _pickImage(
-      BuildContext context, Map<String, dynamic> conta) async {
+  Future<void> _pickImage(BuildContext context, Map<String, dynamic> conta,
+      int parcelaIndex) async {
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
       if (pickedFile != null) {
         File imageFile = File(pickedFile.path);
-        await _uploadFile(context, imageFile, conta);
+        await _uploadFile(context, imageFile, conta, parcelaIndex);
       }
     } catch (e) {
       print('Erro ao capturar imagem: $e');
@@ -179,24 +186,23 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  Future<void> _uploadFile(
-      BuildContext context, File file, Map<String, dynamic> conta) async {
+  Future<void> _uploadFile(BuildContext context, File file,
+      Map<String, dynamic> conta, int parcelaIndex) async {
     try {
       String description = conta['descricao'];
       String directoryId = conta['diretorio'];
       DateTime date = DateTime.now();
-      int parcelaAtual = calcularParcelaAtual(conta['dataVencimento']);
 
-      // Verifica se a conta já foi paga neste mês
-      if (conta['comprovante'] == true) {
-        _showSnackBar('Esta conta já foi paga neste mês.');
+      // Verifica se a parcela já foi paga
+      if (conta['parcelas'][parcelaIndex]['comprovante'] == true) {
+        _showSnackBar('Esta parcela já foi paga.');
         return;
       }
 
       String sanitizedDescription =
           description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
       final fileName =
-          '${sanitizedDescription}_Parcela_$parcelaAtual${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
+          '${sanitizedDescription}_Parcela_${parcelaIndex + 1}_${DateFormat('yyyy-MM-dd').format(date)}_${file.path.split('.').last}';
 
       // Upload do arquivo para o Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child(
@@ -212,17 +218,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
           .doc(directoryId)
           .collection('files')
           .add({
-        'description': '$description - Parcela $parcelaAtual',
+        'description': '$description - Parcela ${parcelaIndex + 1}',
         'date': date,
         'type': file.path.split('.').last,
         'url': fileUrl,
       });
 
-      // Marcar a conta como paga e incrementar parcelas pagas
+      // Marcar a parcela como paga
       setState(() {
-        conta['comprovante'] = true;
-        conta['comprovanteUrl'] = fileUrl;
-        conta['parcelasPagas'] = (conta['parcelasPagas'] ?? 0) + 1;
+        conta['parcelas'][parcelaIndex]['comprovante'] = true;
+        conta['parcelas'][parcelaIndex]['comprovanteUrl'] = fileUrl;
       });
 
       await _saveContas();
@@ -243,10 +248,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   }
 
   Future<void> _mostrarDialogoUpload(
-      Map<String, dynamic> conta, bool isImage) async {
+      Map<String, dynamic> conta, int parcelaIndex, bool isImage) async {
     final _descricaoController = TextEditingController(
-      text:
-          '${conta['descricao']} - Parcela ${calcularParcelaAtual(conta['dataVencimento'])}',
+      text: '${conta['descricao']} - Parcela ${parcelaIndex + 1}',
     );
     String? _diretorioSelecionado = conta['diretorio'];
 
@@ -302,9 +306,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       Navigator.of(context).pop();
                       conta['diretorio'] = _diretorioSelecionado!;
                       if (isImage) {
-                        await _pickImage(context, conta);
+                        await _pickImage(context, conta, parcelaIndex);
                       } else {
-                        await _pickFiles(context, conta);
+                        await _pickFiles(context, conta, parcelaIndex);
                       }
                       await _saveContas();
                     } else {
@@ -325,13 +329,14 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     );
   }
 
-  Future<void> _desmarcarContaComoPaga(Map<String, dynamic> conta) async {
+  Future<void> _desmarcarParcelaComoPaga(
+      Map<String, dynamic> conta, int parcelaIndex) async {
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Desmarcar como paga'),
         content: const Text(
-            'Você tem certeza que deseja desmarcar esta conta como paga?'),
+            'Você tem certeza que deseja desmarcar esta parcela como paga?'),
         actions: [
           TextButton(
             onPressed: () {
@@ -351,9 +356,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
     if (confirm) {
       setState(() {
-        conta['comprovante'] = false;
-        conta['comprovanteUrl'] = '';
-        conta['parcelasPagas'] = (conta['parcelasPagas'] ?? 1) - 1;
+        conta['parcelas'][parcelaIndex]['comprovante'] = false;
+        conta['parcelas'][parcelaIndex]['comprovanteUrl'] = '';
       });
       await _saveContas();
     }
@@ -369,32 +373,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     }
   }
 
-  DateTime calcularDataVencimento(DateTime dataVencimento, int parcelaAtual) {
-    return DateTime(dataVencimento.year,
-        dataVencimento.month + parcelaAtual - 1, dataVencimento.day);
-  }
-
-  int calcularParcelaAtual(DateTime dataVencimento) {
-    DateTime now = DateTime.now();
-    int monthsDifference = (now.year - dataVencimento.year) * 12 +
-        now.month -
-        dataVencimento.month;
-    return monthsDifference + 1;
+  DateTime calcularDataVencimento(DateTime dataVencimento, int parcelaIndex) {
+    return DateTime(dataVencimento.year, dataVencimento.month + parcelaIndex,
+        dataVencimento.day);
   }
 
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      DateTime? dataVencimento = conta['dataVencimento'];
-      if (dataVencimento == null) return false;
-      int parcelaAtual = calcularParcelaAtual(dataVencimento);
-      bool isCurrentMonth = parcelaAtual > 0 &&
-          parcelaAtual <= (conta['quantidadeParcelas'] ?? parcelaAtual);
-      if (isCurrentMonth && conta['comprovante']) {
-        conta['comprovante'] = false; // Marcar como não paga se for um novo mês
-      }
-      return isCurrentMonth || !conta['comprovante'];
+      return true; // Filtragem pode ser ajustada conforme necessário
     }).toList();
 
     // Ordenar contas
@@ -402,14 +390,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       DateTime? dataVencimentoA = a['dataVencimento'];
       DateTime? dataVencimentoB = b['dataVencimento'];
       if (dataVencimentoA == null || dataVencimentoB == null) return 0;
-      int parcelaAtualA = calcularParcelaAtual(dataVencimentoA);
-      int parcelaAtualB = calcularParcelaAtual(dataVencimentoB);
-      DateTime vencimentoA =
-          calcularDataVencimento(dataVencimentoA, parcelaAtualA);
-      DateTime vencimentoB =
-          calcularDataVencimento(dataVencimentoB, parcelaAtualB);
-
-      return vencimentoA.compareTo(vencimentoB);
+      return dataVencimentoA.compareTo(dataVencimentoB);
     });
 
     String dataAtual = DateFormat('dd/MM/yyyy').format(now);
@@ -441,66 +422,77 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       final conta = contasFiltradas[index];
                       DateTime? dataVencimento = conta['dataVencimento'];
                       if (dataVencimento == null) return Container();
-                      int parcelaAtual = calcularParcelaAtual(dataVencimento);
-                      DateTime vencimentoAtual =
-                          calcularDataVencimento(dataVencimento, parcelaAtual);
-                      bool isVencido = vencimentoAtual.isBefore(now);
-                      bool hasComprovante = conta['comprovante'];
 
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        height: 90, // Definindo a altura do container
-                        decoration: BoxDecoration(
-                          color: hasComprovante
-                              ? Colors.green[100]
-                              : isVencido
-                                  ? Colors.red[100]
-                                  : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: hasComprovante
-                                ? Colors.green
-                                : isVencido
-                                    ? Colors.red
-                                    : Colors.grey,
-                            width: 1,
-                          ),
+                      return ExpansionTile(
+                        title: Text(conta['descricao']),
+                        subtitle: Text(
+                          '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
                         ),
-                        child: ListTile(
-                          title: Text(conta['descricao']),
-                          subtitle: Text(
-                            '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoAtual)} - Parcela: ${parcelaAtual} de ${conta['quantidadeParcelas'] ?? '∞'} - Parcelas Pagas: ${conta['parcelasPagas']}',
-                          ),
-                          trailing: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
+                        children: List.generate(conta['quantidadeParcelas'],
+                            (parcelaIndex) {
+                          DateTime vencimentoParcela = calcularDataVencimento(
+                              dataVencimento, parcelaIndex);
+                          bool isVencido = vencimentoParcela.isBefore(now);
+                          bool hasComprovante =
+                              conta['parcelas'][parcelaIndex]['comprovante'];
+
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            height: 90, // Definindo a altura do container
+                            decoration: BoxDecoration(
+                              color: hasComprovante
+                                  ? Colors.green[100]
+                                  : isVencido
+                                      ? Colors.red[100]
+                                      : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: hasComprovante
+                                    ? Colors.green
+                                    : isVencido
+                                        ? Colors.red
+                                        : Colors.grey,
+                                width: 1,
+                              ),
+                            ),
+                            child: ListTile(
+                              title: Text('Parcela ${parcelaIndex + 1}'),
+                              subtitle: Text(
+                                'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
+                              ),
+                              trailing: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    icon:
-                                        const Icon(Icons.attach_file, size: 24),
-                                    onPressed: () =>
-                                        _mostrarDialogoUpload(conta, false),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.attach_file,
+                                            size: 24),
+                                        onPressed: () => _mostrarDialogoUpload(
+                                            conta, parcelaIndex, false),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.camera_alt,
+                                            size: 24),
+                                        onPressed: () => _mostrarDialogoUpload(
+                                            conta, parcelaIndex, true),
+                                      ),
+                                    ],
                                   ),
-                                  IconButton(
-                                    icon:
-                                        const Icon(Icons.camera_alt, size: 24),
-                                    onPressed: () =>
-                                        _mostrarDialogoUpload(conta, true),
-                                  ),
+                                  if (hasComprovante)
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle,
+                                          size: 24),
+                                      onPressed: () =>
+                                          _desmarcarParcelaComoPaga(
+                                              conta, parcelaIndex),
+                                    ),
                                 ],
                               ),
-                              if (hasComprovante)
-                                IconButton(
-                                  icon:
-                                      const Icon(Icons.remove_circle, size: 24),
-                                  onPressed: () =>
-                                      _desmarcarContaComoPaga(conta),
-                                ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        }),
                       );
                     },
                   ),
