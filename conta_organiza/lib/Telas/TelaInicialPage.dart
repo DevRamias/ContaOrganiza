@@ -187,6 +187,12 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       DateTime date = DateTime.now();
       int parcelaAtual = calcularParcelaAtual(conta['dataVencimento']);
 
+      // Verifica se a conta já foi paga neste mês
+      if (conta['comprovante'] == true) {
+        _showSnackBar('Esta conta já foi paga neste mês.');
+        return;
+      }
+
       String sanitizedDescription =
           description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
       final fileName =
@@ -206,7 +212,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
           .doc(directoryId)
           .collection('files')
           .add({
-        'description': sanitizedDescription,
+        'description': '$description - Parcela $parcelaAtual',
         'date': date,
         'type': file.path.split('.').last,
         'url': fileUrl,
