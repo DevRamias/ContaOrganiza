@@ -54,6 +54,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       parcelas.add({
                         'comprovante': false,
                         'comprovanteUrl': '',
+                        'mesAno': DateFormat('MM/yyyy')
+                            .format(DateTime.now().add(Duration(days: 30 * i))),
                       });
                     }
                   }
@@ -427,6 +429,21 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           ? '${conta['descricao']} - ${DateFormat('MM/yyyy').format(now)}'
                           : conta['descricao'];
 
+                      // Adiciona nova parcela para o mês atual se não existir
+                      if (conta['contaFixa'] &&
+                          !conta['parcelas'].any((parcela) =>
+                              parcela['mesAno'] ==
+                              DateFormat('MM/yyyy')
+                                  .format(DateTime(now.year, now.month)))) {
+                        conta['parcelas'].add({
+                          'comprovante': false,
+                          'comprovanteUrl': '',
+                          'mesAno': DateFormat('MM/yyyy')
+                              .format(DateTime(now.year, now.month)),
+                        });
+                        _saveContas();
+                      }
+
                       return ExpansionTile(
                         title: Text(descricao),
                         subtitle: Text(
@@ -434,7 +451,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         ),
                         children: List.generate(
                             conta['contaFixa']
-                                ? 1
+                                ? conta['parcelas'].length
                                 : conta['quantidadeParcelas'], (parcelaIndex) {
                           DateTime vencimentoParcela = conta['contaFixa']
                               ? DateTime(
