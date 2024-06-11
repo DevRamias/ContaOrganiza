@@ -423,17 +423,24 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       DateTime? dataVencimento = conta['dataVencimento'];
                       if (dataVencimento == null) return Container();
 
+                      String descricao = conta['contaFixa']
+                          ? '${conta['descricao']} - ${DateFormat('MM/yyyy').format(now)}'
+                          : conta['descricao'];
+
                       return ExpansionTile(
-                        title: Text(conta['descricao']),
+                        title: Text(descricao),
                         subtitle: Text(
                           '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
                         ),
                         children: List.generate(
                             conta['contaFixa']
-                                ? 12
+                                ? 1
                                 : conta['quantidadeParcelas'], (parcelaIndex) {
-                          DateTime vencimentoParcela = calcularDataVencimento(
-                              dataVencimento, parcelaIndex);
+                          DateTime vencimentoParcela = conta['contaFixa']
+                              ? DateTime(
+                                  now.year, now.month, dataVencimento.day)
+                              : calcularDataVencimento(
+                                  dataVencimento, parcelaIndex);
                           bool isVencido = vencimentoParcela.isBefore(now);
                           bool hasComprovante = conta['parcelas'].length >
                                   parcelaIndex &&
@@ -459,7 +466,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                               ),
                             ),
                             child: ListTile(
-                              title: Text('Parcela ${parcelaIndex + 1}'),
+                              title: Text(conta['contaFixa']
+                                  ? 'Parcela ${DateFormat('MM/yyyy').format(vencimentoParcela)}'
+                                  : 'Parcela ${parcelaIndex + 1}'),
                               subtitle: Text(
                                 'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
                               ),
