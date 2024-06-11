@@ -428,12 +428,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         subtitle: Text(
                           '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
                         ),
-                        children: List.generate(conta['quantidadeParcelas'],
-                            (parcelaIndex) {
+                        children: List.generate(
+                            conta['contaFixa']
+                                ? 12
+                                : conta['quantidadeParcelas'], (parcelaIndex) {
                           DateTime vencimentoParcela = calcularDataVencimento(
                               dataVencimento, parcelaIndex);
                           bool isVencido = vencimentoParcela.isBefore(now);
-                          bool hasComprovante =
+                          bool hasComprovante = conta['parcelas'].length >
+                                  parcelaIndex &&
                               conta['parcelas'][parcelaIndex]['comprovante'];
 
                           return Container(
