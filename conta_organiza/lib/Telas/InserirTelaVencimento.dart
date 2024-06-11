@@ -47,6 +47,18 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
           setState(() {
             _contas =
                 List<Map<String, dynamic>>.from(data['contas'].map((conta) {
+              List<Map<String, dynamic>> parcelas = [];
+              if (conta.containsKey('parcelas')) {
+                parcelas = List<Map<String, dynamic>>.from(conta['parcelas']);
+              } else {
+                int quantidadeParcelas = conta['quantidadeParcelas'] ?? 1;
+                for (int i = 0; i < quantidadeParcelas; i++) {
+                  parcelas.add({
+                    'comprovante': false,
+                    'comprovanteUrl': '',
+                  });
+                }
+              }
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
@@ -56,7 +68,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
                 'pago': conta['pago'] ?? false,
-                'parcelasPagas': conta['parcelasPagas'] ?? 0, // Novo campo
+                'parcelasPagas': conta['parcelasPagas'] ?? 0,
+                'parcelas': parcelas,
               };
             }));
           });
@@ -81,7 +94,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
             'quantidadeParcelas': conta['quantidadeParcelas'],
             'contaFixa': conta['contaFixa'],
             'pago': conta['pago'],
-            'parcelasPagas': conta['parcelasPagas'], // Novo campo
+            'parcelasPagas': conta['parcelasPagas'],
+            'parcelas': conta['parcelas'],
           };
         }).toList(),
       });
@@ -245,7 +259,14 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
                             'pago': false,
-                            'parcelasPagas': 0, // Novo campo
+                            'parcelasPagas': 0,
+                            'parcelas': List.generate(
+                              _quantidadeParcelas ?? 1,
+                              (index) => {
+                                'comprovante': false,
+                                'comprovanteUrl': '',
+                              },
+                            ),
                           });
                         } else {
                           _contas[index!] = {
@@ -255,8 +276,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
                             'pago': conta['pago'],
-                            'parcelasPagas':
-                                conta['parcelasPagas'], // Novo campo
+                            'parcelasPagas': conta['parcelasPagas'],
+                            'parcelas': conta['parcelas'],
                           };
                         }
                         _saveContas();
