@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/scheduler.dart';
+import 'dart:async';
 
 class TelaInicialPage extends StatefulWidget {
   const TelaInicialPage({Key? key});
@@ -21,12 +22,20 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   List<String> _diretorios = [];
   Map<String, String> _diretoriosMap = {};
   User? _currentUser;
+  bool _isDisposed =
+      false; // Variável para verificar se o widget foi descartado
 
   @override
   void initState() {
     super.initState();
     _loadContas();
     _loadDirectories();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true; // Marcar como descartado no dispose
+    super.dispose();
   }
 
   Future<void> _loadContas() async {
@@ -40,9 +49,36 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         if (userDoc.exists) {
           Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
           if (data != null && data.containsKey('contas')) {
-            if (mounted) {
+            if (!_isDisposed) {
               setState(() {
-                _contas = List<Map<String, dynamic>>.from(data['contas']);
+                _contas =
+                    List<Map<String, dynamic>>.from(data['contas'].map((conta) {
+                  List<Map<String, dynamic>> parcelas = [];
+                  if (conta.containsKey('parcelas')) {
+                    parcelas =
+                        List<Map<String, dynamic>>.from(conta['parcelas']);
+                  } else {
+                    int quantidadeParcelas = conta['quantidadeParcelas'] ?? 1;
+                    for (int i = 0; i < quantidadeParcelas; i++) {
+                      parcelas.add({
+                        'comprovante': false,
+                        'comprovanteUrl': '',
+                        'mesAno': DateFormat('MM/yyyy')
+                            .format(DateTime.now().add(Duration(days: 30 * i))),
+                      });
+                    }
+                  }
+                  return {
+                    'descricao': conta['descricao'],
+                    'diretorio': conta['diretorio'],
+                    'dataVencimento': conta['dataVencimento'] != null
+                        ? (conta['dataVencimento'] as Timestamp).toDate()
+                        : null,
+                    'quantidadeParcelas': conta['quantidadeParcelas'],
+                    'contaFixa': conta['contaFixa'] ?? false,
+                    'parcelas': parcelas,
+                  };
+                }));
               });
             }
           }
@@ -51,7 +87,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     } catch (e) {
       print('Erro ao carregar contas: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao carregar contas: $e');
         });
       }
@@ -67,7 +103,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
             .doc(_currentUser!.uid)
             .collection('directories')
             .get();
-        if (mounted) {
+        if (!_isDisposed) {
           setState(() {
             _diretorios =
                 directoriesSnapshot.docs.map((doc) => doc.id).toSet().toList();
@@ -75,13 +111,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
               for (var doc in directoriesSnapshot.docs)
                 doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
             };
+
+            //_loadContas();
+            _loadDirectories();
           });
         }
       }
     } catch (e) {
       print('Erro ao carregar diretórios: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao carregar diretórios: $e');
         });
       }
@@ -101,7 +140,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     } catch (e) {
       print('Erro ao salvar contas: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao salvar contas: $e');
         });
       }
@@ -123,7 +162,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     } catch (e) {
       print('Erro ao selecionar arquivo: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao selecionar arquivo: $e');
         });
       }
@@ -143,7 +182,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
     } catch (e) {
       print('Erro ao capturar imagem: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao capturar imagem: $e');
         });
       }
@@ -156,7 +195,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       String description = conta['descricao'];
       String directoryId = conta['diretorio'];
       DateTime date = DateTime.now();
-
       // Verifica se a parcela já foi paga
       if (conta['parcelas'][parcelaIndex]['comprovante'] == true) {
         _showSnackBar('Esta parcela já foi paga.');
@@ -192,18 +230,19 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
       setState(() {
         conta['parcelas'][parcelaIndex]['comprovante'] = true;
         conta['parcelas'][parcelaIndex]['comprovanteUrl'] = fileUrl;
-        _saveContas(); // Salva as contas após a atualização
       });
 
+      await _saveContas();
+
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Arquivo enviado com sucesso!');
         });
       }
     } catch (e) {
       print('Erro ao fazer upload do arquivo: $e');
       if (mounted) {
-        SchedulerBinding.instance!.addPostFrameCallback((_) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
           _showSnackBar('Erro ao fazer upload do arquivo: $e');
         });
       }
@@ -273,11 +312,13 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       } else {
                         await _pickFiles(context, conta, parcelaIndex);
                       }
-                      if (mounted) {
-                        setState(() {});
-                      }
+                      await _saveContas();
                     } else {
-                      _showSnackBar('Por favor, selecione um diretório.');
+                      if (mounted) {
+                        SchedulerBinding.instance.addPostFrameCallback((_) {
+                          _showSnackBar('Por favor, preencha todos os campos.');
+                        });
+                      }
                     }
                   },
                   child: const Text('Adicionar'),
@@ -326,7 +367,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   }
 
   void _showSnackBar(String message) {
-    if (mounted) {
+    if (!_isDisposed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -533,14 +574,33 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Data Atual: $dataAtual',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text(
+                  'Data Atual: $dataAtual',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(
+                    width: 15), // Espaço entre o Text e o FloatingActionButton
+                Padding(
+                  padding: const EdgeInsets.all(
+                      4.0), // Espaço interno do FloatingActionButton
+                  child: FloatingActionButton(
+                    onPressed: _adicionarConta,
+                    backgroundColor: const Color(0xff838dff),
+                    child: const ImageIcon(
+                      AssetImage('assets/images/plus-line.png'),
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 1),
             Expanded(
               child: Card(
                 elevation: 5,
@@ -669,10 +729,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _adicionarConta,
-        child: const Icon(Icons.add),
       ),
     );
   }
