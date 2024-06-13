@@ -28,6 +28,13 @@ class _PesquisarState extends State<Pesquisar> {
     _loadFiles();
   }
 
+  @override
+  void dispose() {
+    // Implemente este método se precisar cancelar operações assíncronas
+    // ou liberar recursos quando o widget for descartado.
+    super.dispose();
+  }
+
   Future<void> _loadFiles() async {
     _currentUser = FirebaseAuth.instance.currentUser;
     if (_currentUser != null) {
@@ -60,10 +67,13 @@ class _PesquisarState extends State<Pesquisar> {
         }).toList());
       }
 
-      setState(() {
-        _files = files;
-        _filteredFiles = _files;
-      });
+      // Verifica se o widget ainda está montado antes de chamar setState()
+      if (mounted) {
+        setState(() {
+          _files = files;
+          _filteredFiles = _files;
+        });
+      }
     }
   }
 
