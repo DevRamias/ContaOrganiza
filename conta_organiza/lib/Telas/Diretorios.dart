@@ -336,4 +336,10 @@ class _DiretoriosState extends State<Diretorios> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    // Cancelar timers, animações, ouvintes aqui
+    super.dispose();
+  }
 }

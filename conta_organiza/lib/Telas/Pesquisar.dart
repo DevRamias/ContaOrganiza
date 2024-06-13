@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -16,11 +15,14 @@ class Pesquisar extends StatefulWidget {
 }
 
 class _PesquisarState extends State<Pesquisar> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
   List<Map<String, dynamic>> _files = [];
   List<Map<String, dynamic>> _filteredFiles = [];
   String _searchQuery = '';
   DateTime? _selectedDate;
-  User? _currentUser;
 
   @override
   void initState() {
@@ -29,62 +31,69 @@ class _PesquisarState extends State<Pesquisar> {
   }
 
   Future<void> _loadFiles() async {
-    _currentUser = FirebaseAuth.instance.currentUser;
-    if (_currentUser != null) {
-      QuerySnapshot directoriesSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .collection('directories')
-          .get();
-
-      List<Map<String, dynamic>> files = [];
-      for (var directory in directoriesSnapshot.docs) {
-        QuerySnapshot filesSnapshot = await FirebaseFirestore.instance
+    final User? user = _auth.currentUser;
+    if (user != null) {
+      try {
+        final QuerySnapshot directoriesSnapshot = await _firestore
             .collection('users')
-            .doc(_currentUser!.uid)
+            .doc(user.uid)
             .collection('directories')
-            .doc(directory.id)
-            .collection('files')
             .get();
 
-        files.addAll(filesSnapshot.docs.map((doc) {
-          return {
-            'id': doc.id,
-            'description': doc['description'],
-            'date': doc['date'].toDate(),
-            'type': doc['type'],
-            'url': doc['url'],
-            'directoryId': directory.id,
-            'directoryName': directory['name'],
-          };
-        }).toList());
-      }
+        final List<Map<String, dynamic>> files = [];
+        for (var directory in directoriesSnapshot.docs) {
+          final QuerySnapshot filesSnapshot = await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('directories')
+              .doc(directory.id)
+              .collection('files')
+              .get();
 
-      setState(() {
-        _files = files;
-        _filteredFiles = _files;
-      });
+          files.addAll(filesSnapshot.docs.map((doc) {
+            return {
+              'id': doc.id,
+              'description': doc['description'],
+              'date': (doc['date'] as Timestamp).toDate(),
+              'type': doc['type'],
+              'url': doc['url'],
+              'directoryId': directory.id,
+              'directoryName': directory['name'],
+            };
+          }).toList());
+        }
+
+        if (mounted) {
+          setState(() {
+            _files = files;
+            _filteredFiles = files;
+          });
+        }
+      } catch (e) {
+        print('Erro ao carregar arquivos: $e');
+        // TODO: Implementar tratamento de erro para o usuário (ex: SnackBar)
+      }
     }
   }
 
   void _filterFiles() {
-    List<Map<String, dynamic>> filtered = _files.where((file) {
-      bool matchesQuery = file['description']
-          .toLowerCase()
-          .contains(_searchQuery.toLowerCase());
-      bool matchesDate = _selectedDate == null || file['date'] == _selectedDate;
-      return matchesQuery && matchesDate;
-    }).toList();
-
     setState(() {
-      _filteredFiles = filtered;
+      _filteredFiles = _files.where((file) {
+        final bool matchesQuery = file['description']
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase());
+        final bool matchesDate = _selectedDate == null ||
+            DateFormat('yyyy-MM-dd').format(file['date']) ==
+                DateFormat('yyyy-MM-dd').format(_selectedDate!);
+        return matchesQuery && matchesDate;
+      }).toList();
     });
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
@@ -97,61 +106,52 @@ class _PesquisarState extends State<Pesquisar> {
   }
 
   Future<void> _showPdfPreview(String url) async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: FutureBuilder<File>(
-            future: _downloadPdf(url),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasError) {
-                  return const Center(
-                    child: const Text(
-                      'Não foi possível exibir o PDF. Por favor, tente novamente mais tarde.',
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-                try {
-                  return PDFView(filePath: snapshot.data!.path);
-                } catch (e) {
-                  return const Center(
-                    child: Text(
-                      'Erro ao carregar o PDF. Por favor, tente novamente mais tarde.',
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
-            },
-          ),
+    try {
+      final File pdfFile = await _downloadFile(url);
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: PDFView(filePath: pdfFile.path),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Fechar'),
             ),
           ],
-        );
-      },
+        ),
+      );
+    } catch (e) {
+      print('Erro ao exibir PDF: $e');
+      // TODO: Implementar tratamento de erro para o usuário (ex: SnackBar)
+    }
+  }
+
+  void _showImagePreview(String url) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Image.network(url),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<File> _downloadPdf(String url) async {
+  Future<File> _downloadFile(String url) async {
     try {
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = '${directory.path}/${url.split('/').last}';
-      final file = File(filePath);
+      final Directory directory = await getApplicationDocumentsDirectory();
+      final String filePath = '${directory.path}/${url.split('/').last}';
+      final File file = File(filePath);
 
       if (await file.exists()) {
         return file;
       }
 
-      final response = await Dio().get(
+      final Response response = await Dio().get(
         url,
         options: Options(responseType: ResponseType.bytes),
       );
@@ -159,49 +159,7 @@ class _PesquisarState extends State<Pesquisar> {
       await file.writeAsBytes(response.data);
       return file;
     } catch (e) {
-      throw Exception('Erro ao baixar o PDF: $e');
-    }
-  }
-
-  void _showImagePreview(String url) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: FutureBuilder(
-            future: _loadImage(url),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Erro ao carregar a imagem'));
-                }
-                return Image.network(url);
-              } else {
-                return const Center(child: CircularProgressIndicator());
-              }
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Fechar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _loadImage(String url) async {
-    try {
-      final response = await Dio().get(url);
-      if (response.statusCode != 200) {
-        throw Exception('Erro ao carregar a imagem');
-      }
-    } catch (e) {
-      throw Exception('Erro ao carregar a imagem: $e');
+      rethrow;
     }
   }
 
@@ -226,25 +184,22 @@ class _PesquisarState extends State<Pesquisar> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                onChanged: (value) {
-                  description = value;
-                },
+                onChanged: (value) => description = value,
                 controller: TextEditingController(text: description),
                 decoration: const InputDecoration(labelText: 'Descrição'),
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Text('Vencimento: '),
+                  const Text('Data: '),
                   Expanded(
                     child: GestureDetector(
                       onTap: () async {
-                        final pickedDate = await showDatePicker(
+                        final DateTime? pickedDate = await showDatePicker(
                           context: context,
                           initialDate: date,
                           firstDate: DateTime(2000),
-                          lastDate: DateTime(2100),
-                          locale: const Locale('pt', 'BR'),
+                          lastDate: DateTime(2101),
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -252,16 +207,10 @@ class _PesquisarState extends State<Pesquisar> {
                           });
                         }
                       },
-                      child: Row(
-                        children: [
-                          const Icon(Icons.access_time),
-                          const SizedBox(width: 5),
-                          Text(
-                            DateFormat('dd/MM/yyyy').format(date),
-                            style: const TextStyle(
-                                decoration: TextDecoration.underline),
-                          ),
-                        ],
+                      child: Text(
+                        DateFormat('dd/MM/yyyy').format(date),
+                        style: const TextStyle(
+                            decoration: TextDecoration.underline),
                       ),
                     ),
                   ),
@@ -272,26 +221,26 @@ class _PesquisarState extends State<Pesquisar> {
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop();
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(_currentUser!.uid)
-                  .collection('directories')
-                  .doc(fileData['directoryId'])
-                  .collection('files')
-                  .doc(fileData['id'])
-                  .update({
-                'description': description,
-                'date': date,
-              });
-              await _loadFiles();
+              try {
+                await _firestore
+                    .collection('users')
+                    .doc(_auth.currentUser!.uid)
+                    .collection('directories')
+                    .doc(fileData['directoryId'])
+                    .collection('files')
+                    .doc(fileData['id'])
+                    .update({'description': description, 'date': date});
+                await _loadFiles();
+                Navigator.of(context).pop();
+              } catch (e) {
+                print('Erro ao atualizar arquivo: $e');
+                // TODO: Implementar tratamento de erro para o usuário (ex: SnackBar)
+              }
             },
             child: const Text('Salvar'),
           ),
@@ -301,22 +250,44 @@ class _PesquisarState extends State<Pesquisar> {
   }
 
   Future<void> _deleteFile(Map<String, dynamic> fileData) async {
-    if (_currentUser != null) {
-      // Deletar o arquivo do Firebase Storage
-      final storageRef = FirebaseStorage.instance.refFromURL(fileData['url']);
-      await storageRef.delete();
+    try {
+      // Exibe um diálogo de confirmação antes de excluir
+      final bool confirmDelete = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Excluir Arquivo'),
+          content: const Text('Tem certeza que deseja excluir este arquivo?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Excluir'),
+            ),
+          ],
+        ),
+      );
 
-      // Deletar metadados do Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_currentUser!.uid)
-          .collection('directories')
-          .doc(fileData['directoryId'])
-          .collection('files')
-          .doc(fileData['id'])
-          .delete();
+      if (confirmDelete == true) {
+        final Reference storageRef = _storage.refFromURL(fileData['url']);
+        await storageRef.delete();
 
-      _loadFiles();
+        await _firestore
+            .collection('users')
+            .doc(_auth.currentUser!.uid)
+            .collection('directories')
+            .doc(fileData['directoryId'])
+            .collection('files')
+            .doc(fileData['id'])
+            .delete();
+
+        _loadFiles();
+      }
+    } catch (e) {
+      print('Erro ao excluir arquivo: $e');
+      // TODO: Implementar tratamento de erro para o usuário (ex: SnackBar)
     }
   }
 
@@ -358,7 +329,7 @@ class _PesquisarState extends State<Pesquisar> {
                       ),
                       child: Text(
                         _selectedDate != null
-                            ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+                            ? DateFormat('dd/MM/yyyy').format(_selectedDate!)
                             : 'Selecionar Data',
                         style: const TextStyle(
                           decoration: TextDecoration.underline,
@@ -391,24 +362,21 @@ class _PesquisarState extends State<Pesquisar> {
                   final type = fileData['type'];
                   final directoryName = fileData['directoryName'];
 
-                  IconData iconData;
-                  if (type == 'pdf') {
-                    iconData = Icons.picture_as_pdf;
-                  } else {
-                    iconData = Icons.image;
-                  }
+                  IconData iconData =
+                      type == 'pdf' ? Icons.picture_as_pdf : Icons.image;
 
                   return ListTile(
                     leading: Icon(iconData),
                     title: Text(description),
                     subtitle: Text(
-                        'Diretório: $directoryName\nVencimento: ${DateFormat('yyyy-MM-dd').format(date)}'),
+                      'Diretório: $directoryName\nData: ${DateFormat('dd/MM/yyyy').format(date)}',
+                    ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) async {
                         switch (value) {
                           case 'view':
                             if (type == 'pdf') {
-                              _showPdfPreview(fileData['url']);
+                              await _showPdfPreview(fileData['url']);
                             } else {
                               _showImagePreview(fileData['url']);
                             }
@@ -420,25 +388,25 @@ class _PesquisarState extends State<Pesquisar> {
                             _editFileDetails(fileData);
                             break;
                           case 'delete':
-                            _deleteFile(fileData);
+                            await _deleteFile(fileData);
                             break;
                         }
                       },
                       itemBuilder: (BuildContext context) {
-                        return [
-                          const PopupMenuItem(
+                        return const [
+                          PopupMenuItem(
                             value: 'view',
                             child: Text('Visualizar'),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'download',
                             child: Text('Download'),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'edit',
                             child: Text('Editar'),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'delete',
                             child: Text('Excluir'),
                           ),

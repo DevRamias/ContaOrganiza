@@ -1,7 +1,9 @@
+import 'package:conta_organiza/Telas/TelaInicialPage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'Telas/CadastrarUsuario.dart';
 import 'Telas/Inicio.dart';
 import 'Telas/ListaContas.dart';
