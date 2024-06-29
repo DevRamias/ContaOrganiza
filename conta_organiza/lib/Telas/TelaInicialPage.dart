@@ -22,8 +22,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   List<String> _diretorios = [];
   Map<String, String> _diretoriosMap = {};
   User? _currentUser;
-  bool _isDisposed =
-      false; // Variável para verificar se o widget foi descartado
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -34,7 +33,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
   @override
   void dispose() {
-    _isDisposed = true; // Marcar como descartado no dispose
+    _isDisposed = true;
     super.dispose();
   }
 
@@ -111,9 +110,6 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
               for (var doc in directoriesSnapshot.docs)
                 doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
             };
-
-            //_loadContas();
-            _loadDirectories();
           });
         }
       }
@@ -134,7 +130,18 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
             .collection('users')
             .doc(_currentUser!.uid)
             .update({
-          'contas': _contas,
+          'contas': _contas.map((conta) {
+            return {
+              'descricao': conta['descricao'],
+              'diretorio': conta['diretorio'],
+              'dataVencimento': conta['dataVencimento'] != null
+                  ? Timestamp.fromDate(conta['dataVencimento'])
+                  : null,
+              'quantidadeParcelas': conta['quantidadeParcelas'],
+              'contaFixa': conta['contaFixa'],
+              'parcelas': conta['parcelas'],
+            };
+          }).toList(),
         });
       }
     } catch (e) {
@@ -408,7 +415,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                     const SizedBox(height: 20),
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Diretório'),
-                      value: null,
+                      value: _diretorioSelecionado,
                       items: _diretorios.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
@@ -426,10 +433,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            _selectedDate == null
-                                ? 'Selecione data de vencimento'
-                                : DateFormat('dd/MM/yyyy')
-                                    .format(_selectedDate),
+                            DateFormat('dd/MM/yyyy').format(_selectedDate),
                           ),
                         ),
                         ElevatedButton(
@@ -508,13 +512,11 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                 ElevatedButton(
                   onPressed: () {
                     String descricao = _descricaoController.text.trim();
-                    if (descricao.isNotEmpty &&
-                        _diretorioSelecionado != null &&
-                        _selectedDate != null) {
+                    if (descricao.isNotEmpty && _diretorioSelecionado != null) {
                       Map<String, dynamic> novaConta = {
                         'descricao': descricao,
                         'diretorio': _diretorioSelecionado!,
-                        'dataVencimento': Timestamp.fromDate(_selectedDate),
+                        'dataVencimento': _selectedDate,
                         'quantidadeParcelas': _quantidadeParcelas,
                         'contaFixa': _contaFixa,
                         'parcelas': List.generate(
@@ -553,14 +555,22 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
-    List<Map<String, dynamic>> contasFiltradas = _contas.where((conta) {
-      return true; // Filtragem pode ser ajustada conforme necessário
-    }).toList();
+    List<Map<String, dynamic>> contasFixas =
+        _contas.where((conta) => conta['contaFixa'] == true).toList();
+    List<Map<String, dynamic>> contasParceladas =
+        _contas.where((conta) => conta['contaFixa'] == false).toList();
 
-    // Ordenar contas
-    contasFiltradas.sort((a, b) {
-      DateTime? dataVencimentoA = (a['dataVencimento'] as Timestamp?)?.toDate();
-      DateTime? dataVencimentoB = (b['dataVencimento'] as Timestamp?)?.toDate();
+    // Ordenar contas por data de vencimento
+    contasFixas.sort((a, b) {
+      DateTime? dataVencimentoA = a['dataVencimento'];
+      DateTime? dataVencimentoB = b['dataVencimento'];
+      if (dataVencimentoA == null || dataVencimentoB == null) return 0;
+      return dataVencimentoA.compareTo(dataVencimentoB);
+    });
+
+    contasParceladas.sort((a, b) {
+      DateTime? dataVencimentoA = a['dataVencimento'];
+      DateTime? dataVencimentoB = b['dataVencimento'];
       if (dataVencimentoA == null || dataVencimentoB == null) return 0;
       return dataVencimentoA.compareTo(dataVencimentoB);
     });
@@ -602,32 +612,32 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
             ),
             const SizedBox(height: 1),
             Expanded(
-              child: Card(
-                elevation: 5,
-                margin: const EdgeInsets.symmetric(vertical: 2),
-                child: Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: ListView.builder(
-                    itemCount: contasFiltradas.length,
-                    itemBuilder: (context, index) {
-                      final conta = contasFiltradas[index];
-                      DateTime? dataVencimento =
-                          (conta['dataVencimento'] as Timestamp?)?.toDate();
+              child: ListView(
+                children: [
+                  // Seção de Contas Fixas
+                  if (contasFixas.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Contas Fixas',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ...contasFixas.map((conta) {
+                      DateTime? dataVencimento = conta['dataVencimento'];
                       if (dataVencimento == null) return Container();
-
-                      String descricao = conta['contaFixa']
-                          ? '${conta['descricao']} - ${DateFormat('MM/yyyy').format(now)}'
-                          : conta['descricao'];
 
                       // Inicializa a lista de parcelas se for nula
                       conta['parcelas'] ??= [];
 
                       // Adiciona nova parcela para o mês atual se não existir
-                      if (conta['contaFixa'] &&
-                          !conta['parcelas'].any((parcela) =>
-                              parcela['mesAno'] ==
-                              DateFormat('MM/yyyy')
-                                  .format(DateTime(now.year, now.month)))) {
+                      if (!conta['parcelas'].any((parcela) =>
+                          parcela['mesAno'] ==
+                          DateFormat('MM/yyyy')
+                              .format(DateTime(now.year, now.month)))) {
                         conta['parcelas'].add({
                           'comprovante': false,
                           'comprovanteUrl': '',
@@ -638,19 +648,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       }
 
                       return ExpansionTile(
-                        title: Text(descricao),
+                        title: Text(
+                            '${conta['descricao']} - ${DateFormat('MM/yyyy').format(now)}'),
                         subtitle: Text(
                           '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
                         ),
-                        children: List.generate(
-                            conta['contaFixa']
-                                ? conta['parcelas'].length
-                                : conta['quantidadeParcelas'], (parcelaIndex) {
-                          DateTime vencimentoParcela = conta['contaFixa']
-                              ? DateTime(
-                                  now.year, now.month, dataVencimento.day)
-                              : calcularDataVencimento(
-                                  dataVencimento, parcelaIndex);
+                        children: List.generate(conta['parcelas'].length,
+                            (parcelaIndex) {
+                          DateTime vencimentoParcela =
+                              DateTime(now.year, now.month, dataVencimento.day);
                           bool isVencido = vencimentoParcela.isBefore(now);
                           bool hasComprovante = conta['parcelas'] != null &&
                               conta['parcelas'].length > parcelaIndex &&
@@ -675,9 +681,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: ListTile(
-                              title: Text(conta['contaFixa']
-                                  ? '${conta['descricao']} - ${DateFormat('MM/yyyy').format(vencimentoParcela)}'
-                                  : '${conta['descricao']} - Parcela ${parcelaIndex + 1}'),
+                              title: Text(
+                                  '${conta['descricao']} - ${DateFormat('MM/yyyy').format(vencimentoParcela)}'),
                               subtitle: Text(
                                 'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
                               ),
@@ -706,7 +711,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                                             IconButton(
                                               icon: const Icon(
                                                 Icons.remove_circle,
-                                                size: 18, // Tamanho ajustado
+                                                size: 18,
                                               ),
                                               onPressed: () =>
                                                   _desmarcarParcelaComoPaga(
@@ -722,9 +727,107 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           );
                         }),
                       );
-                    },
-                  ),
-                ),
+                    }).toList(),
+                  ],
+
+                  // Seção de Contas Parceladas
+                  if (contasParceladas.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'Contas Parceladas',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ...contasParceladas.map((conta) {
+                      DateTime? dataVencimento = conta['dataVencimento'];
+                      if (dataVencimento == null) return Container();
+
+                      return ExpansionTile(
+                        title: Text(conta['descricao']),
+                        subtitle: Text(
+                          '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
+                        ),
+                        children: List.generate(conta['quantidadeParcelas'],
+                            (parcelaIndex) {
+                          DateTime vencimentoParcela = calcularDataVencimento(
+                              dataVencimento, parcelaIndex);
+                          bool isVencido = vencimentoParcela.isBefore(now);
+                          bool hasComprovante = conta['parcelas'] != null &&
+                              conta['parcelas'].length > parcelaIndex &&
+                              conta['parcelas'][parcelaIndex]['comprovante'];
+
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            decoration: BoxDecoration(
+                              color: hasComprovante
+                                  ? Colors.green[100]
+                                  : isVencido
+                                      ? Colors.red[100]
+                                      : Colors.white,
+                              border: Border.all(
+                                color: hasComprovante
+                                    ? Colors.green
+                                    : isVencido
+                                        ? Colors.red
+                                        : Colors.grey,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListTile(
+                              title: Text(
+                                  '${conta['descricao']} - Parcela ${parcelaIndex + 1}'),
+                              subtitle: Text(
+                                'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
+                              ),
+                              trailing: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.attach_file,
+                                            size: 24),
+                                        onPressed: () => _mostrarDialogoUpload(
+                                            conta, parcelaIndex, false),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.camera_alt,
+                                            size: 24),
+                                        onPressed: () => _mostrarDialogoUpload(
+                                            conta, parcelaIndex, true),
+                                      ),
+                                      if (hasComprovante)
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.remove_circle,
+                                                size: 18,
+                                              ),
+                                              onPressed: () =>
+                                                  _desmarcarParcelaComoPaga(
+                                                      conta, parcelaIndex),
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    }).toList(),
+                  ],
+                ],
               ),
             ),
           ],

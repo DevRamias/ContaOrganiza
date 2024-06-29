@@ -56,19 +56,17 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   parcelas.add({
                     'comprovante': false,
                     'comprovanteUrl': '',
+                    'mesAno': DateFormat('MM/yyyy')
+                        .format(DateTime.now().add(Duration(days: 30 * i))),
                   });
                 }
               }
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
-                'dataVencimento': conta['dataVencimento'] != null
-                    ? (conta['dataVencimento'] as Timestamp).toDate()
-                    : null,
+                'dataVencimento': conta['dataVencimento'],
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
-                'pago': conta['pago'] ?? false,
-                'parcelasPagas': conta['parcelasPagas'] ?? 0,
                 'parcelas': parcelas,
               };
             }));
@@ -88,13 +86,9 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
           return {
             'descricao': conta['descricao'],
             'diretorio': conta['diretorio'],
-            'dataVencimento': conta['dataVencimento'] != null
-                ? Timestamp.fromDate(conta['dataVencimento'])
-                : null,
+            'dataVencimento': conta['dataVencimento'],
             'quantidadeParcelas': conta['quantidadeParcelas'],
             'contaFixa': conta['contaFixa'],
-            'pago': conta['pago'],
-            'parcelasPagas': conta['parcelasPagas'],
             'parcelas': conta['parcelas'],
           };
         }).toList(),
@@ -258,13 +252,14 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'dataVencimento': _dataVencimentoSelecionada!,
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
-                            'pago': false,
-                            'parcelasPagas': 0,
                             'parcelas': List.generate(
                               _quantidadeParcelas ?? 1,
                               (index) => {
                                 'comprovante': false,
                                 'comprovanteUrl': '',
+                                'mesAno': DateFormat('MM/yyyy').format(
+                                    _dataVencimentoSelecionada!
+                                        .add(Duration(days: 30 * index))),
                               },
                             ),
                           });
@@ -275,8 +270,6 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                             'dataVencimento': _dataVencimentoSelecionada!,
                             'quantidadeParcelas': _quantidadeParcelas,
                             'contaFixa': _contaFixa,
-                            'pago': conta['pago'],
-                            'parcelasPagas': conta['parcelasPagas'],
                             'parcelas': conta['parcelas'],
                           };
                         }
@@ -376,7 +369,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'] ?? DateTime.now())} - Parcelas Pagas: ${conta['parcelasPagas']} de ${conta['contaFixa'] ? '∞' : conta['quantidadeParcelas']}'),
+                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'])} - Parcelas: ${conta['contaFixa'] ? '∞' : conta['quantidadeParcelas']}'),
                     trailing: PopupMenuButton<String>(
                       onSelected: (String value) {
                         if (value == 'Editar') {
