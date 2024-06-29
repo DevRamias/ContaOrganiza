@@ -23,6 +23,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   Map<String, String> _diretoriosMap = {};
   User? _currentUser;
   bool _isDisposed = false;
+  int _currentMonthIndex = 0;
 
   @override
   void initState() {
@@ -626,108 +627,88 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         ),
                       ),
                     ),
-                    ...contasFixas.map((conta) {
-                      DateTime? dataVencimento = conta['dataVencimento'];
-                      if (dataVencimento == null) return Container();
+                    SizedBox(
+                      height: 200,
+                      child: PageView.builder(
+                        itemCount: 12,
+                        controller: PageController(
+                            viewportFraction: 0.8,
+                            initialPage: _currentMonthIndex),
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentMonthIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, monthIndex) {
+                          DateTime currentMonth =
+                              DateTime(now.year, now.month + monthIndex);
+                          List<Map<String, dynamic>> contasFixasDoMes =
+                              contasFixas.where((conta) {
+                            DateTime? dataVencimento = conta['dataVencimento'];
+                            return dataVencimento != null &&
+                                dataVencimento.month == currentMonth.month &&
+                                dataVencimento.year == currentMonth.year;
+                          }).toList();
 
-                      // Inicializa a lista de parcelas se for nula
-                      conta['parcelas'] ??= [];
-
-                      // Adiciona nova parcela para o mês atual se não existir
-                      if (!conta['parcelas'].any((parcela) =>
-                          parcela['mesAno'] ==
-                          DateFormat('MM/yyyy')
-                              .format(DateTime(now.year, now.month)))) {
-                        conta['parcelas'].add({
-                          'comprovante': false,
-                          'comprovanteUrl': '',
-                          'mesAno': DateFormat('MM/yyyy')
-                              .format(DateTime(now.year, now.month)),
-                        });
-                        _saveContas();
-                      }
-
-                      return ExpansionTile(
-                        title: Text(
-                            '${conta['descricao']} - ${DateFormat('MM/yyyy').format(now)}'),
-                        subtitle: Text(
-                          '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimento)}',
-                        ),
-                        children: List.generate(conta['parcelas'].length,
-                            (parcelaIndex) {
-                          DateTime vencimentoParcela =
-                              DateTime(now.year, now.month, dataVencimento.day);
-                          bool isVencido = vencimentoParcela.isBefore(now);
-                          bool hasComprovante = conta['parcelas'] != null &&
-                              conta['parcelas'].length > parcelaIndex &&
-                              conta['parcelas'][parcelaIndex]['comprovante'];
-
-                          return Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            decoration: BoxDecoration(
-                              color: hasComprovante
-                                  ? Colors.green[100]
-                                  : isVencido
-                                      ? Colors.red[100]
-                                      : Colors.white,
-                              border: Border.all(
-                                color: hasComprovante
-                                    ? Colors.green
-                                    : isVencido
-                                        ? Colors.red
-                                        : Colors.grey,
-                                width: 1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ListTile(
-                              title: Text(
-                                  '${conta['descricao']} - ${DateFormat('MM/yyyy').format(vencimentoParcela)}'),
-                              subtitle: Text(
-                                'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
-                              ),
-                              trailing: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.attach_file,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta, parcelaIndex, false),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.camera_alt,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta, parcelaIndex, true),
-                                      ),
-                                      if (hasComprovante)
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.remove_circle,
-                                                size: 18,
-                                              ),
-                                              onPressed: () =>
-                                                  _desmarcarParcelaComoPaga(
-                                                      conta, parcelaIndex),
-                                            ),
-                                          ],
-                                        ),
-                                    ],
+                          return Card(
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Text(
+                                    DateFormat('MMMM yyyy')
+                                        .format(currentMonth),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ],
-                              ),
+                                ),
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount: contasFixasDoMes.length,
+                                    itemBuilder: (context, index) {
+                                      Map<String, dynamic> conta =
+                                          contasFixasDoMes[index];
+                                      DateTime? dataVencimento =
+                                          conta['dataVencimento'];
+                                      bool isPaid = conta['parcelas']
+                                              [monthIndex]['comprovante'] ??
+                                          false;
+
+                                      return ListTile(
+                                        title: Text(conta['descricao']),
+                                        subtitle: Text(
+                                          '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${dataVencimento != null ? DateFormat('dd/MM/yyyy').format(dataVencimento) : ''}',
+                                        ),
+                                        trailing: isPaid
+                                            ? const Icon(
+                                                Icons.check_circle,
+                                                color: Colors.green,
+                                              )
+                                            : IconButton(
+                                                icon: const Icon(
+                                                  Icons.attach_file,
+                                                  color: Colors.grey,
+                                                ),
+                                                onPressed: () =>
+                                                    _mostrarDialogoUpload(conta,
+                                                        monthIndex, false),
+                                              ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           );
-                        }),
-                      );
-                    }).toList(),
+                        },
+                      ),
+                    ),
                   ],
 
                   // Seção de Contas Parceladas

@@ -56,15 +56,17 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   parcelas.add({
                     'comprovante': false,
                     'comprovanteUrl': '',
-                    'mesAno': DateFormat('MM/yyyy')
-                        .format(DateTime.now().add(Duration(days: 30 * i))),
+                    'mesAno': DateFormat('MM/yyyy').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                                conta['dataVencimento'].millisecondsSinceEpoch)
+                            .add(Duration(days: 30 * i))),
                   });
                 }
               }
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
-                'dataVencimento': conta['dataVencimento'],
+                'dataVencimento': conta['dataVencimento'].toDate(),
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
                 'parcelas': parcelas,
@@ -86,7 +88,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
           return {
             'descricao': conta['descricao'],
             'diretorio': conta['diretorio'],
-            'dataVencimento': conta['dataVencimento'],
+            'dataVencimento': Timestamp.fromDate(conta['dataVencimento']),
             'quantidadeParcelas': conta['quantidadeParcelas'],
             'contaFixa': conta['contaFixa'],
             'parcelas': conta['parcelas'],
