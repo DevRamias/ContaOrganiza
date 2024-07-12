@@ -210,8 +210,16 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
 
       String sanitizedDescription =
           description.replaceAll(RegExp(r'[\/:*?"<>|]'), '');
-      final fileName =
-          '${sanitizedDescription} - Parcela ${parcelaIndex + 1} - ${DateFormat('yyyy-MM-dd').format(date)}${file.path.split('.').last}';
+
+      // Verifica se a conta é fixa ou parcelada e ajusta a descrição
+      String fileName;
+      if (conta['contaFixa'] == true) {
+        fileName =
+            '${sanitizedDescription} - ${conta['parcelas'][parcelaIndex]['mesAno']} - ${DateFormat('yyyy-MM-dd').format(date)}.${file.path.split('.').last}';
+      } else {
+        fileName =
+            '${sanitizedDescription} - Parcela ${parcelaIndex + 1} - ${DateFormat('yyyy-MM-dd').format(date)}.${file.path.split('.').last}';
+      }
 
       // Upload do arquivo para o Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child(
@@ -227,7 +235,9 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
           .doc(directoryId)
           .collection('files')
           .add({
-        'description': '$description - Parcela ${parcelaIndex + 1}',
+        'description': conta['contaFixa'] == true
+            ? '$description - ${conta['parcelas'][parcelaIndex]['mesAno']}'
+            : '$description - Parcela ${parcelaIndex + 1}',
         'date': date,
         'type': file.path.split('.').last,
         'url': fileUrl,
