@@ -655,12 +655,15 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                         ),
                         children: List.generate(conta['parcelas'].length,
                             (parcelaIndex) {
+                          Map<String, dynamic> parcela =
+                              conta['parcelas'][parcelaIndex];
                           DateTime vencimentoParcela = DateTime(
-                              now.year, now.month, dataVencimentoInicial.day);
+                            int.parse(parcela['mesAno'].split('/')[1]),
+                            int.parse(parcela['mesAno'].split('/')[0]),
+                            dataVencimentoInicial.day,
+                          );
                           bool isVencido = vencimentoParcela.isBefore(now);
-                          bool hasComprovante = conta['parcelas'] != null &&
-                              conta['parcelas'].length > parcelaIndex &&
-                              conta['parcelas'][parcelaIndex]['comprovante'];
+                          bool hasComprovante = parcela['comprovante'];
 
                           return Container(
                             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -682,7 +685,7 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                             ),
                             child: ListTile(
                               title: Text(
-                                  '${conta['descricao']} - ${DateFormat('MM/yyyy').format(vencimentoParcela)}'),
+                                  '${conta['descricao']} - ${parcela['mesAno']}'),
                               subtitle: Text(
                                 'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
                               ),
