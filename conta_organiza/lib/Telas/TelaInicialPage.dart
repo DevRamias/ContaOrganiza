@@ -259,7 +259,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
   Future<void> _mostrarDialogoUpload(
       Map<String, dynamic> conta, int parcelaIndex, bool isImage) async {
     final _descricaoController = TextEditingController(
-      text: '${conta['descricao']} - Parcela ${parcelaIndex + 1}',
+      text:
+          '${conta['descricao']} - ${conta['parcelas'][parcelaIndex]['mesAno']}',
     );
     String? _diretorioSelecionado = conta['diretorio'];
 
@@ -274,7 +275,8 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Adicionar Comprovante'),
+              title: Text(
+                  '${conta['descricao']} - ${conta['parcelas'][parcelaIndex]['mesAno']}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
