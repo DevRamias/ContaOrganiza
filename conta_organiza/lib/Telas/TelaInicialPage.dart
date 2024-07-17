@@ -693,122 +693,126 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimentoInicial)}',
                         ),
                         children: [
-                          if (parcelasNaoPagas.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(
+                          if (parcelasNaoPagas.isNotEmpty)
+                            ExpansionTile(
+                              title: const Text(
                                 'Parcelas Não Pagas',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            ...parcelasNaoPagas.map((parcela) {
-                              DateTime vencimentoParcela = DateTime(
-                                int.parse(parcela['mesAno'].split('/')[1]),
-                                int.parse(parcela['mesAno'].split('/')[0]),
-                                dataVencimentoInicial.day,
-                              );
-                              bool isVencido = vencimentoParcela.isBefore(now);
+                              children: parcelasNaoPagas.map((parcela) {
+                                DateTime vencimentoParcela = DateTime(
+                                  int.parse(parcela['mesAno'].split('/')[1]),
+                                  int.parse(parcela['mesAno'].split('/')[0]),
+                                  dataVencimentoInicial.day,
+                                );
+                                bool isVencido =
+                                    vencimentoParcela.isBefore(now);
 
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isVencido
-                                      ? Colors.red[100]
-                                      : Colors.white,
-                                  border: Border.all(
-                                    color: isVencido ? Colors.red : Colors.grey,
-                                    width: 1,
+                                return Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isVencido
+                                        ? Colors.red[100]
+                                        : Colors.white,
+                                    border: Border.all(
+                                      color:
+                                          isVencido ? Colors.red : Colors.grey,
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                      '${conta['descricao']} - ${parcela['mesAno']}'),
-                                  subtitle: Text(
-                                    'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
+                                  child: ListTile(
+                                    title: Text(
+                                        '${conta['descricao']} - ${parcela['mesAno']}'),
+                                    subtitle: Text(
+                                      'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.attach_file,
+                                              size: 24),
+                                          onPressed: () =>
+                                              _mostrarDialogoUpload(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela),
+                                                  false),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.camera_alt,
+                                              size: 24),
+                                          onPressed: () =>
+                                              _mostrarDialogoUpload(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela),
+                                                  true),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.attach_file,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta,
-                                            conta['parcelas'].indexOf(parcela),
-                                            false),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.camera_alt,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta,
-                                            conta['parcelas'].indexOf(parcela),
-                                            true),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                          if (parcelasPagas.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(
+                                );
+                              }).toList(),
+                            ),
+                          if (parcelasPagas.isNotEmpty)
+                            ExpansionTile(
+                              title: const Text(
                                 'Parcelas Pagas',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            ...parcelasPagas.map((parcela) {
-                              DateTime vencimentoParcela = DateTime(
-                                int.parse(parcela['mesAno'].split('/')[1]),
-                                int.parse(parcela['mesAno'].split('/')[0]),
-                                dataVencimentoInicial.day,
-                              );
+                              children: parcelasPagas.map((parcela) {
+                                DateTime vencimentoParcela = DateTime(
+                                  int.parse(parcela['mesAno'].split('/')[1]),
+                                  int.parse(parcela['mesAno'].split('/')[0]),
+                                  dataVencimentoInicial.day,
+                                );
 
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.green[100],
-                                  border: Border.all(
-                                    color: Colors.green,
-                                    width: 1,
+                                return Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[100],
+                                    border: Border.all(
+                                      color: Colors.green,
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                      '${conta['descricao']} - ${parcela['mesAno']}'),
-                                  subtitle: Text(
-                                    'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.remove_circle,
-                                          size: 18,
+                                  child: ListTile(
+                                    title: Text(
+                                        '${conta['descricao']} - ${parcela['mesAno']}'),
+                                    subtitle: Text(
+                                      'Vencimento: ${DateFormat('dd/MM/yyyy').format(vencimentoParcela)}',
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.remove_circle,
+                                            size: 18,
+                                          ),
+                                          onPressed: () =>
+                                              _desmarcarParcelaComoPaga(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela)),
                                         ),
-                                        onPressed: () =>
-                                            _desmarcarParcelaComoPaga(
-                                                conta,
-                                                conta['parcelas']
-                                                    .indexOf(parcela)),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
+                                );
+                              }).toList(),
+                            ),
                         ],
                       );
                     }).toList(),
@@ -863,111 +867,113 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                           '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento Inicial: ${DateFormat('dd/MM/yyyy').format(dataVencimentoInicial)}',
                         ),
                         children: [
-                          if (parcelasNaoPagas.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(
+                          if (parcelasNaoPagas.isNotEmpty)
+                            ExpansionTile(
+                              title: const Text(
                                 'Parcelas Não Pagas',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            ...parcelasNaoPagas.map((parcela) {
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: parcela['isVencido']
-                                      ? Colors.red[100]
-                                      : Colors.white,
-                                  border: Border.all(
+                              children: parcelasNaoPagas.map((parcela) {
+                                return Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
                                     color: parcela['isVencido']
-                                        ? Colors.red
-                                        : Colors.grey,
-                                    width: 1,
+                                        ? Colors.red[100]
+                                        : Colors.white,
+                                    border: Border.all(
+                                      color: parcela['isVencido']
+                                          ? Colors.red
+                                          : Colors.grey,
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                      '${conta['descricao']} - ${parcela['mesAno']}'),
-                                  subtitle: Text(
-                                    'Vencimento: ${DateFormat('dd/MM/yyyy').format(parcela['vencimentoParcela'])}',
+                                  child: ListTile(
+                                    title: Text(
+                                        '${conta['descricao']} - ${parcela['mesAno']}'),
+                                    subtitle: Text(
+                                      'Vencimento: ${DateFormat('dd/MM/yyyy').format(parcela['vencimentoParcela'])}',
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.attach_file,
+                                              size: 24),
+                                          onPressed: () =>
+                                              _mostrarDialogoUpload(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela),
+                                                  false),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.camera_alt,
+                                              size: 24),
+                                          onPressed: () =>
+                                              _mostrarDialogoUpload(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela),
+                                                  true),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.attach_file,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta,
-                                            conta['parcelas'].indexOf(parcela),
-                                            false),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.camera_alt,
-                                            size: 24),
-                                        onPressed: () => _mostrarDialogoUpload(
-                                            conta,
-                                            conta['parcelas'].indexOf(parcela),
-                                            true),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                          if (parcelasPagas.isNotEmpty) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(
+                                );
+                              }).toList(),
+                            ),
+                          if (parcelasPagas.isNotEmpty)
+                            ExpansionTile(
+                              title: const Text(
                                 'Parcelas Pagas',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                            ...parcelasPagas.map((parcela) {
-                              return Container(
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.green[100],
-                                  border: Border.all(
-                                    color: Colors.green,
-                                    width: 1,
+                              children: parcelasPagas.map((parcela) {
+                                return Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[100],
+                                    border: Border.all(
+                                      color: Colors.green,
+                                      width: 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                      '${conta['descricao']} - ${parcela['mesAno']}'),
-                                  subtitle: Text(
-                                    'Vencimento: ${DateFormat('dd/MM/yyyy').format(parcela['vencimentoParcela'])}',
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.remove_circle,
-                                          size: 18,
+                                  child: ListTile(
+                                    title: Text(
+                                        '${conta['descricao']} - ${parcela['mesAno']}'),
+                                    subtitle: Text(
+                                      'Vencimento: ${DateFormat('dd/MM/yyyy').format(parcela['vencimentoParcela'])}',
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.remove_circle,
+                                            size: 18,
+                                          ),
+                                          onPressed: () =>
+                                              _desmarcarParcelaComoPaga(
+                                                  conta,
+                                                  conta['parcelas']
+                                                      .indexOf(parcela)),
                                         ),
-                                        onPressed: () =>
-                                            _desmarcarParcelaComoPaga(
-                                                conta,
-                                                conta['parcelas']
-                                                    .indexOf(parcela)),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
+                                );
+                              }).toList(),
+                            ),
                         ],
                       );
                     }).toList(),
