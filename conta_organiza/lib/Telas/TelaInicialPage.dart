@@ -645,19 +645,34 @@ class _TelaInicialPageState extends State<TelaInicialPage> {
                       // Inicializa a lista de parcelas se for nula
                       conta['parcelas'] ??= [];
 
-                      // Adiciona nova parcela para o mês atual se não existir
-                      if (!conta['parcelas'].any((parcela) =>
-                          parcela['mesAno'] ==
-                          DateFormat('MM/yyyy')
-                              .format(DateTime(now.year, now.month)))) {
+                      // Adiciona todas as parcelas ausentes até o mês atual
+                      DateTime ultimaParcelaData = dataVencimentoInicial;
+                      if (conta['parcelas'].isNotEmpty) {
+                        ultimaParcelaData = DateTime(
+                          int.parse(
+                              conta['parcelas'].last['mesAno'].split('/')[1]),
+                          int.parse(
+                              conta['parcelas'].last['mesAno'].split('/')[0]),
+                          dataVencimentoInicial.day,
+                        );
+                      }
+
+                      while (ultimaParcelaData
+                          .isBefore(DateTime(now.year, now.month, 1))) {
+                        ultimaParcelaData = DateTime(
+                          ultimaParcelaData.year,
+                          ultimaParcelaData.month + 1,
+                          dataVencimentoInicial.day,
+                        );
                         conta['parcelas'].add({
                           'comprovante': false,
                           'comprovanteUrl': '',
-                          'mesAno': DateFormat('MM/yyyy')
-                              .format(DateTime(now.year, now.month)),
+                          'mesAno':
+                              DateFormat('MM/yyyy').format(ultimaParcelaData),
                         });
-                        _saveContas();
                       }
+
+                      _saveContas();
 
                       // Separar parcelas pagas e não pagas
                       List<Map<String, dynamic>> parcelasPagas = [];
