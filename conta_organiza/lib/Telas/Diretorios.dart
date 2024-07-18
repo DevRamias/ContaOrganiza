@@ -17,6 +17,7 @@ class Diretorios extends StatefulWidget {
           .collection('users')
           .doc(currentUser.uid)
           .collection('directories')
+          .orderBy('position')
           .get();
       return querySnapshot.docs.map((doc) => doc['name'] as String).toList();
     }
@@ -53,7 +54,7 @@ class _DiretoriosState extends State<Diretorios> {
             .collection('users')
             .doc(_currentUser!.uid)
             .collection('directories')
-            .add({'name': name});
+            .add({'name': name, 'position': _directories.length});
         await _loadDirectories();
       } else {
         // Mostrar uma mensagem de erro se o diretório já existir
@@ -116,10 +117,24 @@ class _DiretoriosState extends State<Diretorios> {
           .collection('users')
           .doc(_currentUser!.uid)
           .collection('directories')
+          .orderBy('position')
           .get();
       setState(() {
         _directories = querySnapshot.docs;
       });
+    }
+  }
+
+  Future<void> _updateDirectoryPositions() async {
+    if (_currentUser != null) {
+      WriteBatch batch = FirebaseFirestore.instance.batch();
+
+      for (int i = 0; i < _directories.length; i++) {
+        DocumentSnapshot directory = _directories[i];
+        batch.update(directory.reference, {'position': i});
+      }
+
+      await batch.commit();
     }
   }
 
@@ -237,6 +252,7 @@ class _DiretoriosState extends State<Diretorios> {
       }
       final DocumentSnapshot item = _directories.removeAt(oldIndex);
       _directories.insert(newIndex, item);
+      _updateDirectoryPositions();
     });
   }
 
@@ -251,14 +267,8 @@ class _DiretoriosState extends State<Diretorios> {
           mainAxisSpacing: 10,
           childAspectRatio: 3.5 / 2,
         ),
-        itemCount: _directories.length + 1,
+        itemCount: _directories.length,
         itemBuilder: (context, index) {
-          if (index == _directories.length) {
-            return const SizedBox(
-              key: ValueKey('spacer'),
-              height: 80,
-            );
-          }
           DocumentSnapshot dir = _directories[index];
           return GestureDetector(
             key: ValueKey(dir.id),
