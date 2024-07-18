@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Diretorios.dart'; // Importar o arquivo Diretorios.dart
 import 'CustomAppBar.dart'; // Importar o arquivo CustomAppBar.dart
 
 class InserirTelaVencimento extends StatefulWidget {
@@ -15,6 +14,7 @@ class InserirTelaVencimento extends StatefulWidget {
 class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   List<Map<String, dynamic>> _contas = [];
   List<String> _diretorios = [];
+  Map<String, String> _diretoriosMap = {};
   String _userName = 'Nome do Usuário';
   String _userProfileImage = 'assets/images/Foto do perfil.png';
   User? _currentUser;
@@ -28,10 +28,21 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
   }
 
   Future<void> _loadDirectories() async {
-    List<String> directories = await Diretorios.getDirectories();
-    setState(() {
-      _diretorios = directories;
-    });
+    _currentUser = FirebaseAuth.instance.currentUser;
+    if (_currentUser != null) {
+      QuerySnapshot directoriesSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUser!.uid)
+          .collection('directories')
+          .get();
+      setState(() {
+        _diretorios = directoriesSnapshot.docs.map((doc) => doc.id).toList();
+        _diretoriosMap = {
+          for (var doc in directoriesSnapshot.docs)
+            doc.id: (doc.data() as Map<String, dynamic>)['name'] ?? doc.id
+        };
+      });
+    }
   }
 
   Future<void> _loadContas() async {
@@ -66,7 +77,9 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
               return {
                 'descricao': conta['descricao'],
                 'diretorio': conta['diretorio'],
-                'dataVencimento': conta['dataVencimento'].toDate(),
+                'dataVencimento': conta['dataVencimento'] != null
+                    ? conta['dataVencimento'].toDate()
+                    : null,
                 'quantidadeParcelas': conta['quantidadeParcelas'],
                 'contaFixa': conta['contaFixa'] ?? false,
                 'parcelas': parcelas,
@@ -147,7 +160,7 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                       items: _diretorios.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value),
+                          child: Text(_diretoriosMap[value] ?? value),
                         );
                       }).toList(),
                       onChanged: (newValue) {
@@ -309,8 +322,16 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
         userName: _userName,
         userProfileImage: _userProfileImage,
         title: 'Vencimento',
-        onUpdateProfileImage: (String newImageUrl) {},
-        onUpdateUserName: (String newName) {},
+        onUpdateProfileImage: (String newImageUrl) {
+          setState(() {
+            _userProfileImage = newImageUrl;
+          });
+        },
+        onUpdateUserName: (String newName) {
+          setState(() {
+            _userName = newName;
+          });
+        },
       ),
       body: Stack(
         children: [
@@ -371,7 +392,8 @@ class _InserirTelaVencimentoState extends State<InserirTelaVencimento> {
                   return ListTile(
                     title: Text(conta['descricao']),
                     subtitle: Text(
-                        '${conta['diretorio']} - Vencimento: ${DateFormat('dd/MM/yyyy').format(conta['dataVencimento'])} - Parcelas: ${conta['contaFixa'] ? '∞' : conta['quantidadeParcelas']}'),
+                      '${_diretoriosMap[conta['diretorio']] ?? conta['diretorio']} - Vencimento: ${conta['dataVencimento'] != null ? DateFormat('dd/MM/yyyy').format(conta['dataVencimento']) : 'Não definido'} - Parcelas: ${conta['contaFixa'] ? '∞' : conta['quantidadeParcelas'] ?? 'Não definido'}',
+                    ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (String value) {
                         if (value == 'Editar') {
